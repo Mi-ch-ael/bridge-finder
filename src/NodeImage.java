@@ -10,9 +10,14 @@ public class NodeImage extends JComponent{
             this.text = text;
             this.center = center;
             setBounds(0, 0, 10000, 10000);
-        };
+    };
+
+    public int getx(){return center.x;}
+    public int gety(){return center.y;}
+
     public void paintComponent(Graphics g){
-            g.drawOval(center.x-size/2,center.y-size/2, size, size);
+            g.setColor(Color.CYAN);
+            g.fillOval(center.x-size/2,center.y-size/2, size, size);
             g.setColor(Color.black);
             g.drawString(text,  center.x, center.y);
     }

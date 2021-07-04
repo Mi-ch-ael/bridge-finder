@@ -23,10 +23,12 @@ public class MainWindow extends JFrame {
 
     private DrawNodeActionListener buttonDrawNodeActionListener;
     private DrawEdgeActionListener buttonDrawEdgeActionListener;
+    private EraseActionListener buttonEraseActionListener;
 
 
     public MainWindow(){
         setTitle("MainWindow");
+
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         setMinimumSize(new Dimension(900, 800));
@@ -35,6 +37,8 @@ public class MainWindow extends JFrame {
 
         lbl = new JLabel("Error\n");
         lbl.setBorder(BorderFactory.createLineBorder(Color.black));
+        lbl.setOpaque(true);
+        lbl.setBackground(Color.WHITE);
 
 
         buttonDrawNode = new JButton("Draw Node");
@@ -52,9 +56,13 @@ public class MainWindow extends JFrame {
         buttonDrawEdgeActionListener = new DrawEdgeActionListener();
         buttonDrawEdge.addActionListener(buttonDrawEdgeActionListener);
 
+        buttonEraseActionListener = new EraseActionListener();
+        buttonErase.addActionListener(buttonEraseActionListener);
+
 
         Container container = getContentPane();
         container.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+        //container.setBackground(Color.BLUE);
 
         container.setLayout(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -123,7 +131,10 @@ public class MainWindow extends JFrame {
         setVisible(true);
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        //UIManager.setLookAndFeel(
+                //UIManager.getSystemLookAndFeelClassName());
+        //UIManager.setLookAndFeel("com.sun.java.swing.plaf.motif.MotifLookAndFeel");
         new MainWindow();
     }
 
@@ -136,6 +147,12 @@ public class MainWindow extends JFrame {
     public class DrawEdgeActionListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             area.setMode(PaintArea.Mode.Edge1);
+        }
+    }
+
+    public class EraseActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            area.setMode(PaintArea.Mode.Erase);
         }
     }
 }

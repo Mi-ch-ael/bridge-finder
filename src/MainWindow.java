@@ -1,3 +1,5 @@
+import org.w3c.dom.Node;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -8,13 +10,13 @@ public class MainWindow extends JFrame {
     private JLabel lbl;
 
     private JButton buttonDrawNode;
-    JButton buttonDrawEdge;
-    JButton buttonErase;
-    JButton buttonOpenFile;
-    JButton buttonSaveInFile;
-    JButton buttonStop;
-    JButton buttonNext;
-    JButton buttonStart;
+    private JButton buttonDrawEdge;
+    private JButton buttonErase;
+    private JButton buttonOpenFile;
+    private JButton buttonSaveInFile;
+    private JButton buttonStop;
+    private JButton buttonNext;
+    private JButton buttonStart;
 
 
     public MainWindow(){
@@ -104,6 +106,16 @@ public class MainWindow extends JFrame {
         constraints.gridx = 5;
         constraints.gridy = 6;
         container.add(buttonStart, constraints);
+
+
+        NodeImage nd = new NodeImage("A", new Point(10, 20));
+        NodeImage nd1 = new NodeImage("Bcd", new Point(500, 500));
+        area.add(nd);
+        area.add(nd1);
+        EdgeImage line = new EdgeImage( new Point(100, 200), new Point(50, 300));
+        EdgeImage line1 = new EdgeImage( new Point(0, 0), new Point(150, 200));
+        area.add(line);
+        area.add(line1);
 
 
         setVisible(true);

@@ -2,10 +2,13 @@ import org.w3c.dom.Node;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 
 public class MainWindow extends JFrame {
 
+    private PaintArea area;
 
     private JLabel lbl;
 
@@ -18,6 +21,9 @@ public class MainWindow extends JFrame {
     private JButton buttonNext;
     private JButton buttonStart;
 
+    private DrawNodeActionListener buttonDrawNodeActionListener;
+    private DrawEdgeActionListener buttonDrawEdgeActionListener;
+
 
     public MainWindow(){
         setTitle("MainWindow");
@@ -25,7 +31,7 @@ public class MainWindow extends JFrame {
 
         setMinimumSize(new Dimension(900, 800));
 
-        PaintArea area = new PaintArea();
+        area = new PaintArea();
 
         lbl = new JLabel("Error\n");
         lbl.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -39,6 +45,12 @@ public class MainWindow extends JFrame {
         buttonStop = new JButton("Stop");
         buttonNext = new JButton("Next");
         buttonStart = new JButton("Start");
+
+        buttonDrawNodeActionListener = new DrawNodeActionListener();
+        buttonDrawNode.addActionListener(buttonDrawNodeActionListener);
+
+        buttonDrawEdgeActionListener = new DrawEdgeActionListener();
+        buttonDrawEdge.addActionListener(buttonDrawEdgeActionListener);
 
 
         Container container = getContentPane();
@@ -108,20 +120,22 @@ public class MainWindow extends JFrame {
         container.add(buttonStart, constraints);
 
 
-        NodeImage nd = new NodeImage("A", new Point(10, 20));
-        NodeImage nd1 = new NodeImage("Bcd", new Point(500, 500));
-        area.add(nd);
-        area.add(nd1);
-        EdgeImage line = new EdgeImage( new Point(100, 200), new Point(50, 300));
-        EdgeImage line1 = new EdgeImage( new Point(0, 0), new Point(150, 200));
-        area.add(line);
-        area.add(line1);
-
-
         setVisible(true);
     }
 
     public static void main(String[] args){
         new MainWindow();
+    }
+
+    public class DrawNodeActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            area.setMode(PaintArea.Mode.Node);
+        }
+    }
+
+    public class DrawEdgeActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            area.setMode(PaintArea.Mode.Edge1);
+        }
     }
 }

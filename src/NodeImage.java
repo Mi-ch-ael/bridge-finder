@@ -12,9 +12,9 @@ public class NodeImage extends JComponent{
             setBounds(0, 0, 10000, 10000);
         };
     public void paintComponent(Graphics g){
-            g.drawOval(center.x,center.y, size, size);
+            g.drawOval(center.x-size/2,center.y-size/2, size, size);
             g.setColor(Color.black);
-            g.drawString(text,  center.x + size/2, center.y + size/2);
+            g.drawString(text,  center.x, center.y);
     }
 }
 

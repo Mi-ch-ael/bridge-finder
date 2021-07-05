@@ -1,5 +1,3 @@
-import org.w3c.dom.Node;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -10,7 +8,9 @@ public class MainWindow extends JFrame {
 
     private PaintArea area;
 
-    private JLabel lbl;
+    private JTextArea textArea;
+
+    private JScrollPane scroll;
 
     private JButton buttonDrawNode;
     private JButton buttonDrawEdge;
@@ -25,9 +25,8 @@ public class MainWindow extends JFrame {
     private DrawEdgeActionListener buttonDrawEdgeActionListener;
     private EraseActionListener buttonEraseActionListener;
 
-
     public MainWindow(){
-        setTitle("MainWindow");
+        setTitle("Tarjan's strongly connected components algorithm");
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
@@ -35,11 +34,13 @@ public class MainWindow extends JFrame {
 
         area = new PaintArea();
 
-        lbl = new JLabel("Error\n");
-        lbl.setBorder(BorderFactory.createLineBorder(Color.black));
-        lbl.setOpaque(true);
-        lbl.setBackground(Color.WHITE);
-
+        textArea = new JTextArea(5, 1);
+        textArea.setOpaque(true);
+        textArea.setBackground(Color.WHITE);
+        textArea.setText("Hello!\n");
+        textArea.setEditable(false);
+        scroll = new JScrollPane(textArea);
+        scroll.setBorder(BorderFactory.createLineBorder(Color.black));
 
         buttonDrawNode = new JButton("Draw Node");
         buttonDrawEdge = new JButton("Draw Edge");
@@ -62,7 +63,6 @@ public class MainWindow extends JFrame {
 
         Container container = getContentPane();
         container.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
-        //container.setBackground(Color.BLUE);
 
         container.setLayout(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -85,7 +85,7 @@ public class MainWindow extends JFrame {
         constraints.gridheight = 1;
         constraints.gridy = 6;
         constraints.gridx = 0;
-        container.add(lbl, constraints);
+        container.add(scroll, constraints);
 
 
         constraints.anchor = GridBagConstraints.NORTH;
@@ -115,11 +115,11 @@ public class MainWindow extends JFrame {
         constraints.gridwidth = 1;
         constraints.gridx = 5;
         constraints.gridy = 5;
-        container.add(buttonNext, constraints);
+        container.add(buttonStop, constraints);
 
         constraints.gridx = 6;
         constraints.gridy = 5;
-        container.add(buttonStop, constraints);
+        container.add(buttonNext, constraints);
 
         constraints.anchor = GridBagConstraints.CENTER;
         constraints.gridwidth = 2;
@@ -127,7 +127,7 @@ public class MainWindow extends JFrame {
         constraints.gridy = 6;
         container.add(buttonStart, constraints);
 
-
+        pack();
         setVisible(true);
     }
 
@@ -140,19 +140,19 @@ public class MainWindow extends JFrame {
 
     public class DrawNodeActionListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            area.setMode(PaintArea.Mode.Node);
+            area.setMode(PaintAreaMode.Node);
         }
     }
 
     public class DrawEdgeActionListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            area.setMode(PaintArea.Mode.Edge1);
+            area.setMode(PaintAreaMode.Edge1);
         }
     }
 
     public class EraseActionListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            area.setMode(PaintArea.Mode.Erase);
+            area.setMode(PaintAreaMode.Erase);
         }
     }
 }

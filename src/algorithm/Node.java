@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public class Node {
     private String name = "";
-    private int algorithmValues[] = new int[4];
+    private int[] algorithmValues = new int[4];
     private Edge parentTreeEdge = null;
     private Point point;
     private ArrayList<Edge> adjacentEdges = new ArrayList<>();

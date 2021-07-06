@@ -20,7 +20,7 @@ public class PaintArea extends JLayeredPane {
             switch(currentMode) {
                 case Node:
                     String s = (String) JOptionPane.showInputDialog(null, "Enter a Node name (single character):\n");
-                    if(s != null & s.length() == 1) {
+                    if(s != null && s.length() == 1) {   // if(s != null & s.length() == 1)
                         drawNode(s, new Point(x1, y1)); //............... Adding a node
                     }
                     currentMode = PaintAreaMode.None;

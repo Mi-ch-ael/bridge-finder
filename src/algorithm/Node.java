@@ -21,7 +21,7 @@ public class Node {
         this.point = new Point(x, y);
     }
 
-    public Node(String name, point newPoint){
+    public Node(String name, Point newPoint){
         this.name = name;
         this.point = newPoint;
     }
@@ -53,7 +53,12 @@ public class Node {
 
     public boolean removeEdge(Edge removedEdge){
         int tempIndex = adjacentEdges.indexOf(removedEdge);
-        return (tempIndex == -1) ? false : adjacentEdges.remove(tempIndex);
+        if(tempIndex == -1)
+            return false;
+        else {
+            adjacentEdges.remove(tempIndex);
+            return true;
+        }
     }
     
     public ArrayList<Edge> getAdjacentEdges(){ return adjacentEdges; }

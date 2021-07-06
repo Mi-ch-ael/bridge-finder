@@ -21,7 +21,6 @@ public class BridgeFinder{
         int nodeCount, edgeCount;
         Graph graph = new Graph();
         String firstNodeName, secondNodeName;
-
         System.out.printf("Write node count:\t");
         nodeCount = in.nextInt();
         for(int i = 0; i < nodeCount; i++){
@@ -63,7 +62,6 @@ public class BridgeFinder{
         }
         graph.print();
         System.out.printf("=========\n\n");
-        
         System.out.printf("Graph bridges finder:\n");
         graph.runAlgorithm();
         graph.print();

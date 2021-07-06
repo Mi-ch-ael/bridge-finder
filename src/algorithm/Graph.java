@@ -179,5 +179,12 @@ public class Graph {
         System.out.printf("\n");
         for(int i = 0; i < edges.size(); i++)
             System.out.printf("Edge: %s-%s | Forward/Backward: %b/%b | isBridge: %b\n", edges.get(i).getFirstNode().getName(), edges.get(i).getSecondNode().getName(), edges.get(i).isForward, edges.get(i).isBackward, edges.get(i).isBridge);
+        System.out.printf("\n");
+    }
+
+    public void reset(){
+        nodes.clear();
+        edges.clear();
+        bridges.clear();
     }
 }

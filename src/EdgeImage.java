@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 
+import algorithm.Point;
+
 public class EdgeImage extends JComponent{
     private static final long serialVersionUID = 1L;
     private Point start;

@@ -3,7 +3,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-
 public class MainWindow extends JFrame {
 
     private PaintArea area;
@@ -26,7 +25,7 @@ public class MainWindow extends JFrame {
     private EraseActionListener buttonEraseActionListener;
 
     public MainWindow(){
-        setTitle("Tarjan's strongly connected components algorithm");
+        setTitle("Tarjan's bridge-finding algorithm");
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 

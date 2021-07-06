@@ -1,7 +1,11 @@
+import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import algorithm.Node;
+import algorithm.Edge;
 
 public class MainWindow extends JFrame {
 
@@ -23,6 +27,7 @@ public class MainWindow extends JFrame {
     private DrawNodeActionListener buttonDrawNodeActionListener;
     private DrawEdgeActionListener buttonDrawEdgeActionListener;
     private EraseActionListener buttonEraseActionListener;
+    private StartActionListener buttonStartActionListener;
 
     public MainWindow(){
         setTitle("Tarjan's bridge-finding algorithm");
@@ -36,7 +41,7 @@ public class MainWindow extends JFrame {
         textArea = new JTextArea(5, 1);
         textArea.setOpaque(true);
         textArea.setBackground(Color.WHITE);
-        textArea.setText("Hello!\n");
+        //textArea.setText("Hello!\n");
         textArea.setEditable(false);
         scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -58,6 +63,9 @@ public class MainWindow extends JFrame {
 
         buttonEraseActionListener = new EraseActionListener();
         buttonErase.addActionListener(buttonEraseActionListener);
+        
+        buttonStartActionListener = new StartActionListener();
+        buttonStart.addActionListener(buttonStartActionListener);
 
 
         Container container = getContentPane();
@@ -153,5 +161,22 @@ public class MainWindow extends JFrame {
         public void actionPerformed(ActionEvent e) {
             area.setMode(PaintAreaMode.Erase);
         }
+    }
+    
+    public class StartActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		textArea.setText("");
+    		area.graph.runAlgorithm();
+    		ArrayList<Edge> bridges = area.graph.getBridges();
+    		if(bridges.size() == 0) {
+    			textArea.append("This graph has no bridges.\n");
+    		}
+    		StringBuilder answer;
+    		for(Edge bridge: bridges) {
+    			answer = new StringBuilder("Edge ");
+    			answer.append(bridge.getFirstNode().getName()).append(" - ").append(bridge.getSecondNode().getName());
+    			textArea.append(answer.append(" is a bridge\n").toString());
+    		}
+    	}
     }
 }

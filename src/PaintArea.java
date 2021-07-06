@@ -13,9 +13,6 @@ public class PaintArea extends JLayeredPane {
 
 	final Graph graph; // final ~ composition; else -- aggregation?
     private int x1, y1, x2, y2;
-    //private ArrayList<NodeImage> nodes; // ...... stub for real graph
-
-
     PaintAreaMode currentMode;
 
     private class MyMouseHandler extends MouseAdapter {
@@ -27,7 +24,6 @@ public class PaintArea extends JLayeredPane {
                 case Node:
                     String s = (String) JOptionPane.showInputDialog(null, "Enter a Node name (single character):\n");
                     if(s != null && s.length() == 1) {
-                        //drawNode(s, new Point(x1, y1)); //............... Adding a node
                         if(graph.addNode(s)) {
                         	Node node = graph.getNodeByName(s);
                         	node.setPoint(x1, y1);
@@ -49,7 +45,6 @@ public class PaintArea extends JLayeredPane {
                 case Edge2:
                     Node nd1 = findNodeByCoordinate(new Point(x1, y1));
                     if(nd1 != null) {
-                        //drawEdge(new Point(x2, y2), new Point(nd1.getx(), nd1.gety())); //............. Adding a edge
                     	Edge edge = new Edge(findNodeByCoordinate(new Point(x2, y2)), nd1);
                     	if(graph.addEdge(edge)) {
                     		drawEdge(edge);
@@ -85,8 +80,6 @@ public class PaintArea extends JLayeredPane {
 
         currentMode = PaintAreaMode.None;
 
-        //nodes = new ArrayList<NodeImage>();  // ..... initialisation nodes array
-
         MyMouseHandler handler = new MyMouseHandler();
         this.addMouseListener(handler);
         this.addMouseMotionListener(handler);
@@ -99,21 +92,10 @@ public class PaintArea extends JLayeredPane {
     private void drawNode(Node node) {
     	this.add(new NodeImage(node.getName(), node.getPoint()));
     }
-    
-    /*public void drawNode(String str, Point point){
-        NodeImage nd = new NodeImage(str, point);
-        add(nd);
-        nodes.add(nd); //......... Add node in array
-    }*/
 
     private void drawEdge(Edge edge) {
     	this.add(new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint()));
     }
-    
-    /*public void drawEdge(Point start, Point end){
-        EdgeImage nd = new EdgeImage(start, end);
-        add(nd);
-    }*/
     
     private void drawGraph() {
     	for(Node node: this.graph.getNodes()) {
@@ -132,8 +114,6 @@ public class PaintArea extends JLayeredPane {
     		this.remove(components[0]);
     		components = this.getComponents();
     	}
-    	// skip in actual code?
-    	// this.revalidate();
     }
 
     private Node findNodeByCoordinate(Point point){

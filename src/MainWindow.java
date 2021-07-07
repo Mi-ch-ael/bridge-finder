@@ -6,8 +6,10 @@ import java.awt.event.ActionListener;
 
 import algorithm.Node;
 import algorithm.Edge;
+import algorithm.Graph;
 
 public class MainWindow extends JFrame {
+	private final Graph graph;
 
     private PaintArea area;
 
@@ -30,13 +32,15 @@ public class MainWindow extends JFrame {
     private StartActionListener buttonStartActionListener;
 
     public MainWindow(){
+    	graph = new Graph();
+    	
         setTitle("Tarjan's bridge-finding algorithm");
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         setMinimumSize(new Dimension(900, 800));
 
-        area = new PaintArea();
+        area = new PaintArea(this.graph);
 
         textArea = new JTextArea(5, 1);
         textArea.setOpaque(true);
@@ -166,8 +170,8 @@ public class MainWindow extends JFrame {
     public class StartActionListener implements ActionListener {
     	public void actionPerformed(ActionEvent e) {
     		textArea.setText("");
-    		area.graph.runAlgorithm();
-    		ArrayList<Edge> bridges = area.graph.getBridges();
+    		graph.runAlgorithm();
+    		ArrayList<Edge> bridges = graph.getBridges();
     		if(bridges.size() == 0) {
     			textArea.append("This graph has no bridges.\n");
     		}

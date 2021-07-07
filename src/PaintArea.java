@@ -11,7 +11,7 @@ import algorithm.Graph;
 
 public class PaintArea extends JLayeredPane {
 
-	final Graph graph; // final ~ composition; else -- aggregation?
+	private final Graph graph;
     private int x1, y1, x2, y2;
     PaintAreaMode currentMode;
 
@@ -70,8 +70,8 @@ public class PaintArea extends JLayeredPane {
         }
     }
 
-    public PaintArea() {
-    	this.graph = new Graph();
+    public PaintArea(Graph graph) {
+    	this.graph = graph;
     	
         setOpaque(true);
         setBackground(Color.WHITE);

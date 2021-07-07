@@ -21,7 +21,9 @@ public class NodeImage extends JComponent{
             g.setColor(Color.CYAN);
             g.fillOval(center.x-size/2,center.y-size/2, size, size);
             g.setColor(Color.black);
-            g.drawString(text,  center.x, center.y);
+            Font f = new Font("Times New Roman", Font.PLAIN, 20);
+            g.setFont(f);
+            g.drawString(text,  center.x-7, center.y+5);
     }
 }
 

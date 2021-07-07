@@ -17,9 +17,12 @@ public class MainWindow extends JFrame {
 
     private JScrollPane scroll;
 
-    private JButton buttonDrawNode;
-    private JButton buttonDrawEdge;
-    private JButton buttonErase;
+    private ButtonGroup buttonGroup;
+
+    private JRadioButton buttonDrawNode;
+    private JRadioButton buttonDrawEdge;
+    private JRadioButton buttonErase;
+
     private JButton buttonOpenFile;
     private JButton buttonSaveInFile;
     private JButton buttonStop;
@@ -51,9 +54,17 @@ public class MainWindow extends JFrame {
         scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createLineBorder(Color.black));
 
-        buttonDrawNode = new JButton("Draw Node");
-        buttonDrawEdge = new JButton("Draw Edge");
-        buttonErase = new JButton("Erase");
+        buttonGroup = new ButtonGroup();
+
+        buttonDrawNode = new JRadioButton("Draw Node", false);
+        buttonDrawEdge = new JRadioButton("Draw Edge", false);
+        buttonErase = new JRadioButton("Erase", false);
+
+        buttonGroup.add(buttonDrawNode);
+        buttonGroup.add(buttonDrawEdge);
+        buttonGroup.add(buttonErase);
+
+
         buttonOpenFile = new JButton("Open File");
         buttonSaveInFile = new JButton("Save In File");
         buttonStop = new JButton("Stop");

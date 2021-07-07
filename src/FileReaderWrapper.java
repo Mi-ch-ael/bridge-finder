@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.awt.Component;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +37,8 @@ class FileReaderWrapper {
 		
 		if(dialogResult != JFileChooser.APPROVE_OPTION) return null;
 		
-		filename = chooser.getSelectedFile().getName();
+		//filename = chooser.getSelectedFile().getName();
+		filename = chooser.getSelectedFile().getAbsolutePath();
 		if(filename.length() == 0) return null;
 		
 		try {
@@ -52,14 +54,8 @@ class FileReaderWrapper {
 	
 	public ArrayList<ArrayList<String>> read(Mode mode) {
 		ArrayList<String> lines = new ArrayList<String>();
-		/*try {
-			lines = (ArrayList<String>)Files.readAllLines(Paths.get(filename), StandardCharsets.UTF_8);
-		}*/
-		try(BufferedReader reader = Files.newBufferedReader(Paths.get(filename), StandardCharsets.UTF_8)){
-			String nextLine;
-			while((nextLine = reader.readLine()) != null) {
-				lines.add(nextLine);
-			}
+		try {
+			lines = (ArrayList<String>)Files.readAllLines(path, StandardCharsets.UTF_8);
 		}
 		catch(IOException e) {
 			return null;
@@ -67,7 +63,12 @@ class FileReaderWrapper {
 		
 		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
 		for(String line: lines) {
-			result.add((ArrayList<String>)Arrays.asList(line.split("\\s+")));
+			ArrayList<String> tmp = new ArrayList<String>();
+			for(String word: line.split("\\s+")) {
+				tmp.add(word);
+			}
+			//result.add((ArrayList<String>)Arrays.asList(line.split("\\s+")));
+			result.add(tmp);
 		}
 		
 		return result;

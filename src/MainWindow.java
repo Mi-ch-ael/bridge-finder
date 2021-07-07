@@ -192,7 +192,9 @@ public class MainWindow extends JFrame {
     				textArea.append("WARNING: Input line doesn't describe an edge: "+line.toString()+". Ignored.\n");
     				continue;
     			}
-    			if(!(graph.addNode(line.get(0)))) {
+    			if(line.get(0).length() == 1) graph.addNode(line.get(0));
+    			if(line.get(1).length() == 1) graph.addNode(line.get(1));
+    			/*if(!(graph.addNode(line.get(0)))) {
     				textArea.append("ERROR: Node " + line.get(0) + " is not allowed.\n");
     				continue;
     			}
@@ -200,11 +202,24 @@ public class MainWindow extends JFrame {
     				graph.removeNode(line.get(0));
     				textArea.append("ERROR: Node " + line.get(1) + " is not allowed.\n");
     				continue;
-    			}
+    			}*/
     			if(!(graph.addEdge(line.get(0), line.get(1)))) {
     				textArea.append("ERROR: Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
+    				textArea.append("\t" + "Either invalid node name has been encountered, or this edge already " + 
+    				"exists, or this edge is a loop.\n");
     			}
     		}
+    		
+    		int radius = Math.min(area.getBounds().height, area.getBounds().width) / 2 - 35;
+    		int xCenter = area.getBounds().width/2;
+    		int yCenter = area.getBounds().height/2;
+    		
+    		ArrayList<Node> lst = graph.getNodes();
+    		for(int i = 0; i < lst.size(); ++i) {
+    			double angle = 2*i*Math.PI/lst.size();
+    			lst.get(i).setPoint(new algorithm.Point((int)(xCenter + radius*Math.cos(angle)), (int)(yCenter + radius*Math.sin(angle))));
+    		}
+    		
     		area.clear();
     		area.drawGraph();
     	}

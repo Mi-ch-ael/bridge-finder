@@ -1,10 +1,15 @@
+import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import algorithm.Node;
+import algorithm.Edge;
+import algorithm.Graph;
 
 public class MainWindow extends JFrame {
+	private final Graph graph;
 
     private PaintArea area;
 
@@ -24,20 +29,24 @@ public class MainWindow extends JFrame {
     private DrawNodeActionListener buttonDrawNodeActionListener;
     private DrawEdgeActionListener buttonDrawEdgeActionListener;
     private EraseActionListener buttonEraseActionListener;
+    private StartActionListener buttonStartActionListener;
+    private OpenFileActionListener buttonOpenFileActionListener;
 
     public MainWindow(){
-        setTitle("Tarjan's strongly connected components algorithm");
+    	graph = new Graph();
+    	
+        setTitle("Tarjan's bridge-finding algorithm");
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         setMinimumSize(new Dimension(900, 800));
 
-        area = new PaintArea();
+        area = new PaintArea(this.graph);
 
         textArea = new JTextArea(5, 1);
         textArea.setOpaque(true);
         textArea.setBackground(Color.WHITE);
-        textArea.setText("Hello!\n");
+        //textArea.setText("Hello!\n");
         textArea.setEditable(false);
         scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -59,6 +68,12 @@ public class MainWindow extends JFrame {
 
         buttonEraseActionListener = new EraseActionListener();
         buttonErase.addActionListener(buttonEraseActionListener);
+        
+        buttonStartActionListener = new StartActionListener();
+        buttonStart.addActionListener(buttonStartActionListener);
+        
+        buttonOpenFileActionListener = new OpenFileActionListener();
+        buttonOpenFile.addActionListener(buttonOpenFileActionListener);
 
 
         Container container = getContentPane();
@@ -154,5 +169,76 @@ public class MainWindow extends JFrame {
         public void actionPerformed(ActionEvent e) {
             area.setMode(PaintAreaMode.Erase);
         }
+    }
+    
+    public class OpenFileActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		textArea.setText("");
+    		FileReaderWrapper wrapper = new FileReaderWrapper();
+    		if(wrapper.open(MainWindow.this) == null) {
+    			textArea.append("INFO: File has not been chosen or has not been found.\n");
+    			return;
+    		}
+    		
+    		ArrayList<ArrayList<String>> content = wrapper.read(FileReaderWrapper.Mode.SAVEFILE);
+    		if(content == null) {
+    			textArea.setText("ERROR: Failed to parse file.\n");
+    			return;
+    		}
+    		graph.reset();
+    		
+    		for(ArrayList<String> line: content) {
+    			if(line.size() != 2) {
+    				textArea.append("WARNING: Input line doesn't describe an edge: "+line.toString()+". Ignored.\n");
+    				continue;
+    			}
+    			if(line.get(0).length() == 1) graph.addNode(line.get(0));
+    			if(line.get(1).length() == 1) graph.addNode(line.get(1));
+    			/*if(!(graph.addNode(line.get(0)))) {
+    				textArea.append("ERROR: Node " + line.get(0) + " is not allowed.\n");
+    				continue;
+    			}
+    			if(!(graph.addNode(line.get(1)))) {
+    				graph.removeNode(line.get(0));
+    				textArea.append("ERROR: Node " + line.get(1) + " is not allowed.\n");
+    				continue;
+    			}*/
+    			if(!(graph.addEdge(line.get(0), line.get(1)))) {
+    				textArea.append("ERROR: Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
+    				textArea.append("\t" + "Either invalid node name has been encountered, or this edge already " + 
+    				"exists, or this edge is a loop.\n");
+    			}
+    		}
+    		
+    		int radius = Math.min(area.getBounds().height, area.getBounds().width) / 2 - 35;
+    		int xCenter = area.getBounds().width/2;
+    		int yCenter = area.getBounds().height/2;
+    		
+    		ArrayList<Node> lst = graph.getNodes();
+    		for(int i = 0; i < lst.size(); ++i) {
+    			double angle = 2*i*Math.PI/lst.size();
+    			lst.get(i).setPoint(new algorithm.Point((int)(xCenter + radius*Math.cos(angle)), (int)(yCenter + radius*Math.sin(angle))));
+    		}
+    		
+    		area.clear();
+    		area.drawGraph();
+    	}
+    }
+    
+    public class StartActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		textArea.setText("");
+    		graph.runAlgorithm();
+    		ArrayList<Edge> bridges = graph.getBridges();
+    		if(bridges.size() == 0) {
+    			textArea.append("This graph has no bridges.\n");
+    		}
+    		StringBuilder answer;
+    		for(Edge bridge: bridges) {
+    			answer = new StringBuilder("Edge ");
+    			answer.append(bridge.getFirstNode().getName()).append(" - ").append(bridge.getSecondNode().getName());
+    			textArea.append(answer.append(" is a bridge\n").toString());
+    		}
+    	}
     }
 }

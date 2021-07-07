@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 
+import algorithm.Point;
+
 public class NodeImage extends JComponent{
     private static final long serialVersionUID = 1L;
     private final int size = 70;

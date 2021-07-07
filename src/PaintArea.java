@@ -4,12 +4,15 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import algorithm.Point;
+import algorithm.Edge;
+import algorithm.Node;
+import algorithm.Graph;
+
 public class PaintArea extends JLayeredPane {
 
-    private int x1, x2, y1, y2;
-    private ArrayList<NodeImage> nodes; // ...... stub for real graph
-
-
+	private final Graph graph;
+    private int x1, y1, x2, y2;
     PaintAreaMode currentMode;
 
     private class MyMouseHandler extends MouseAdapter {
@@ -20,35 +23,41 @@ public class PaintArea extends JLayeredPane {
             switch(currentMode) {
                 case Node:
                     String s = (String) JOptionPane.showInputDialog(null, "Enter a Node name (single character):\n");
-                    if(s != null && s.length() == 1) {   // if(s != null & s.length() == 1)
-                        drawNode(s, new Point(x1, y1)); //............... Adding a node
+                    if(s != null && s.length() == 1) {
+                        if(graph.addNode(s)) {
+                        	Node node = graph.getNodeByName(s);
+                        	node.setPoint(x1, y1);
+                        	drawNode(node);
+                        }
                     }
                     currentMode = PaintAreaMode.None;
                     break;
                 case Edge1:
-                    NodeImage nd = findNodeByCoordinate(new Point(x1, y1));
+                    Node nd = findNodeByCoordinate(new Point(x1, y1));
                     if(nd != null) {
-                        x2 = nd.getx();
-                        y2 = nd.gety();
+                        x2 = nd.getPoint().x;
+                        y2 = nd.getPoint().y;
                         currentMode = PaintAreaMode.Edge2;
                     }
                     else
                         currentMode = PaintAreaMode.None;
                     break;
                 case Edge2:
-                    NodeImage nd1 = findNodeByCoordinate(new Point(x1, y1));
+                    Node nd1 = findNodeByCoordinate(new Point(x1, y1));
                     if(nd1 != null) {
-                        drawEdge(new Point(x2, y2), new Point(nd1.getx(), nd1.gety())); //............. Adding a edge
+                    	Edge edge = new Edge(findNodeByCoordinate(new Point(x2, y2)), nd1);
+                    	if(graph.addEdge(edge)) {
+                    		drawEdge(edge);
+                    	}
                     }
                     currentMode = PaintAreaMode.None;
                     break;
                 case Erase:
-                    NodeImage nd2 = findNodeByCoordinate(new Point(x1, y1));
-                    if(nd2 != null) {
-                        remove(nd2); //............. Remove a node from JLayeredPane
-                        nodes.remove(nd2); //............. Remove a node from array
-                        revalidate();
-                        repaint();
+                    Node deletedNode = findNodeByCoordinate(new Point(x1, y1));
+                    if(deletedNode != null) {
+                    	graph.removeNode(deletedNode);
+                        clear();
+                        drawGraph();
                     }
                     currentMode = PaintAreaMode.None;
                     break;
@@ -61,15 +70,15 @@ public class PaintArea extends JLayeredPane {
         }
     }
 
-    public PaintArea() {
+    public PaintArea(Graph graph) {
+    	this.graph = graph;
+    	
         setOpaque(true);
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createLineBorder(Color.black));
         setMinimumSize(new Dimension(400, 400));
 
         currentMode = PaintAreaMode.None;
-
-        nodes = new ArrayList<NodeImage>();  // ..... initialisation nodes array
 
         MyMouseHandler handler = new MyMouseHandler();
         this.addMouseListener(handler);
@@ -80,20 +89,36 @@ public class PaintArea extends JLayeredPane {
         currentMode = md;
     }
 
-    public void drawNode(String str, Point point){
-        NodeImage nd = new NodeImage(str, point);
-        add(nd);
-        nodes.add(nd); //......... Add node in array
+    private void drawNode(Node node) {
+    	this.add(new NodeImage(node.getName(), node.getPoint()));
     }
 
-    public void drawEdge(Point start, Point end){
-        EdgeImage nd = new EdgeImage(start, end);
-        add(nd);
+    private void drawEdge(Edge edge) {
+    	this.add(new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint()));
+    }
+    
+    public void drawGraph() {
+    	for(Node node: this.graph.getNodes()) {
+    		this.drawNode(node);
+    	}
+    	for(Edge edge: this.graph.getEdges()) {
+    		this.drawEdge(edge);
+    	}
+    	this.revalidate();
+    	this.repaint();
+    }
+    
+    public void clear() {
+    	Component[] components = this.getComponents();
+    	while(components.length > 0) {
+    		this.remove(components[0]);
+    		components = this.getComponents();
+    	}
     }
 
-    private NodeImage findNodeByCoordinate(Point point){
-        for(NodeImage nd: nodes){  //..... Search node from array
-            if(Math.pow((point.x - nd.getx()), 2) + Math.pow((point.y - nd.gety()), 2) < 700 )
+    private Node findNodeByCoordinate(Point point){
+        for(Node nd: graph.getNodes()){  
+            if(Math.pow((point.x - nd.getPoint().x), 2) + Math.pow((point.y - nd.getPoint().y), 2) < 700 )
                 return nd;
         }
         return null;

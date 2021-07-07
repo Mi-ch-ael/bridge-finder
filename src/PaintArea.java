@@ -97,7 +97,7 @@ public class PaintArea extends JLayeredPane {
     	this.add(new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint()));
     }
     
-    private void drawGraph() {
+    public void drawGraph() {
     	for(Node node: this.graph.getNodes()) {
     		this.drawNode(node);
     	}
@@ -108,7 +108,7 @@ public class PaintArea extends JLayeredPane {
     	this.repaint();
     }
     
-    private void clear() {
+    public void clear() {
     	Component[] components = this.getComponents();
     	while(components.length > 0) {
     		this.remove(components[0]);

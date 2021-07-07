@@ -30,6 +30,7 @@ public class MainWindow extends JFrame {
     private DrawEdgeActionListener buttonDrawEdgeActionListener;
     private EraseActionListener buttonEraseActionListener;
     private StartActionListener buttonStartActionListener;
+    private OpenFileActionListener buttonOpenFileActionListener;
 
     public MainWindow(){
     	graph = new Graph();
@@ -70,6 +71,9 @@ public class MainWindow extends JFrame {
         
         buttonStartActionListener = new StartActionListener();
         buttonStart.addActionListener(buttonStartActionListener);
+        
+        buttonOpenFileActionListener = new OpenFileActionListener();
+        buttonOpenFile.addActionListener(buttonOpenFileActionListener);
 
 
         Container container = getContentPane();
@@ -165,6 +169,45 @@ public class MainWindow extends JFrame {
         public void actionPerformed(ActionEvent e) {
             area.setMode(PaintAreaMode.Erase);
         }
+    }
+    
+    public class OpenFileActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		textArea.setText("");
+    		FileReaderWrapper wrapper = new FileReaderWrapper();
+    		if(wrapper.open(MainWindow.this) == null) {
+    			textArea.append("INFO: File has not been chosen or has not been found.\n");
+    			return;
+    		}
+    		
+    		ArrayList<ArrayList<String>> content = wrapper.read(FileReaderWrapper.Mode.SAVEFILE);
+    		if(content == null) {
+    			textArea.setText("ERROR: Failed to parse file.\n");
+    			return;
+    		}
+    		graph.reset();
+    		
+    		for(ArrayList<String> line: content) {
+    			if(line.size() != 2) {
+    				textArea.append("WARNING: Input line doesn't describe an edge: "+line.toString()+". Ignored.\n");
+    				continue;
+    			}
+    			if(!(graph.addNode(line.get(0)))) {
+    				textArea.append("ERROR: Node " + line.get(0) + " is not allowed.\n");
+    				continue;
+    			}
+    			if(!(graph.addNode(line.get(1)))) {
+    				graph.removeNode(line.get(0));
+    				textArea.append("ERROR: Node " + line.get(1) + " is not allowed.\n");
+    				continue;
+    			}
+    			if(!(graph.addEdge(line.get(0), line.get(1)))) {
+    				textArea.append("ERROR: Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
+    			}
+    		}
+    		area.clear();
+    		area.drawGraph();
+    	}
     }
     
     public class StartActionListener implements ActionListener {

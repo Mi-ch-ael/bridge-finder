@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.Enumeration;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -34,6 +36,9 @@ public class MainWindow extends JFrame {
     private EraseActionListener buttonEraseActionListener;
     private StartActionListener buttonStartActionListener;
     private OpenFileActionListener buttonOpenFileActionListener;
+    private StopActionListener buttonStopActionListener;
+    
+    private PaintAreaMode stashedMode;
 
     public MainWindow(){
     	graph = new Graph();
@@ -49,7 +54,6 @@ public class MainWindow extends JFrame {
         textArea = new JTextArea(5, 1);
         textArea.setOpaque(true);
         textArea.setBackground(Color.WHITE);
-        //textArea.setText("Hello!\n");
         textArea.setEditable(false);
         scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -86,6 +90,8 @@ public class MainWindow extends JFrame {
         buttonOpenFileActionListener = new OpenFileActionListener();
         buttonOpenFile.addActionListener(buttonOpenFileActionListener);
 
+        buttonStopActionListener = new StopActionListener();
+        buttonStop.addActionListener(buttonStopActionListener);
 
         Container container = getContentPane();
         container.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -205,15 +211,6 @@ public class MainWindow extends JFrame {
     			}
     			if(line.get(0).length() == 1) graph.addNode(line.get(0));
     			if(line.get(1).length() == 1) graph.addNode(line.get(1));
-    			/*if(!(graph.addNode(line.get(0)))) {
-    				textArea.append("ERROR: Node " + line.get(0) + " is not allowed.\n");
-    				continue;
-    			}
-    			if(!(graph.addNode(line.get(1)))) {
-    				graph.removeNode(line.get(0));
-    				textArea.append("ERROR: Node " + line.get(1) + " is not allowed.\n");
-    				continue;
-    			}*/
     			if(!(graph.addEdge(line.get(0), line.get(1)))) {
     				textArea.append("ERROR: Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
     				textArea.append("\t" + "Either invalid node name has been encountered, or this edge already " + 
@@ -238,8 +235,19 @@ public class MainWindow extends JFrame {
     
     public class StartActionListener implements ActionListener {
     	public void actionPerformed(ActionEvent e) {
-    		textArea.setText("");
+    		stashedMode = area.currentMode;
+    		area.currentMode = PaintAreaMode.None;
+    		for(Enumeration<AbstractButton> enumeration = buttonGroup.getElements();
+    				enumeration.hasMoreElements();) {
+    			AbstractButton processedButton = enumeration.nextElement();
+    			processedButton.setEnabled(false);
+    		}
+    		buttonOpenFile.setEnabled(false);
+    		buttonSaveInFile.setEnabled(false);
+    		
+    		textArea.append("\nStarting algorithm...\n====\n");
     		graph.runAlgorithm();
+    		
     		ArrayList<Edge> bridges = graph.getBridges();
     		if(bridges.size() == 0) {
     			textArea.append("This graph has no bridges.\n");
@@ -252,4 +260,17 @@ public class MainWindow extends JFrame {
     		}
     	}
     }
+    
+    public class StopActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		for(Enumeration<AbstractButton> enumeration = buttonGroup.getElements();
+    				enumeration.hasMoreElements();) {
+    			enumeration.nextElement().setEnabled(true);
+    		}
+    		buttonOpenFile.setEnabled(true);
+    		buttonSaveInFile.setEnabled(true);
+    		area.currentMode = stashedMode;
+    	}
+    }
+    
 }

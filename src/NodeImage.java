@@ -19,6 +19,7 @@ public class NodeImage extends JComponent{
     public int gety(){return center.y;}
 
     public void setColor(Color color){this.color = color;}
+    public Color getColor() { return this.color; }
 
     public void paintComponent(Graphics g){
             g.setColor(color);

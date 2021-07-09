@@ -53,7 +53,7 @@ public class MainWindow extends JFrame {
 
         area = new PaintArea(this.graph);
 
-        textArea = new JTextArea(5, 1);
+        textArea = new JTextArea(10, 1);
         textArea.setOpaque(true);
         textArea.setBackground(Color.WHITE);
         textArea.setEditable(false);
@@ -255,11 +255,11 @@ public class MainWindow extends JFrame {
     		buttonStop.setEnabled(true);
     		buttonNext.setEnabled(true);
     		
-    		ArrayList<Edge> visEdges = graph.getVisualizationEdges();
+    		ArrayList<Object> visObjects = graph.getVisualizationObjects();
     		textArea.append("\nStarting algorithm... Click 'Next' to explore steps.\n====\n");
     		graph.runAlgorithm();
     		
-    		context = new VisualStatus(visEdges, graph.getNodes(), graph.getBridges());
+    		context = new VisualStatus(visObjects, graph.getNodes(), graph.getBridges());
     	}
     }
     
@@ -288,105 +288,106 @@ public class MainWindow extends JFrame {
     
     public static enum Stage {
 		SEARCH,
-		CALCULATION,
-		DECISION
+		DECISION,
+		FINISH
 	}
     
     public class VisualStatus {
     	private Stage stage;
-    	private int searchIndex;
-    	private ArrayList<Edge> edgesInSearch;
-    	private ArrayList<Node> nodesInSearch;
-    	private ArrayList<Node> nodes;
-    	//private ArrayList<Edge> edges;
+    	private ArrayList<Object> objectsInSearch;
     	private ArrayList<Edge> bridges;
-    	private Deque<Edge> stack;
+    	private Deque<Edge> edgeStack;
+    	private Deque<Node> nodeStack;
     	
-    	public VisualStatus(ArrayList<Edge> edgesInSearch, ArrayList<Node> nodes, ArrayList<Edge> bridges) {
-    		this.edgesInSearch = new ArrayList<Edge>();
-    		this.edgesInSearch.addAll(edgesInSearch);
-    		this.nodesInSearch = new ArrayList<Node>();
-    		
-    		this.nodes = new ArrayList<Node>();
-    		this.nodes.addAll(nodes);
-    		this.nodes.sort( (nd1, nd2) -> nd1.getAlgorithmValues()[0] - nd2.getAlgorithmValues()[0] );
+    	private final Color usedNodeColor = Color.LIGHT_GRAY;
+    	private final Color activeNodeColor = Color.YELLOW;
+    	private final Color bridgeColor = Color.RED;
+    	
+    	public VisualStatus(ArrayList<Object> objectsInSearch, ArrayList<Node> nodes, ArrayList<Edge> bridges) {
+    		this.objectsInSearch = objectsInSearch;
+    		this.stage = Stage.SEARCH;
     		this.bridges = bridges;
-    		
-    		if(edgesInSearch.size() > 0) {
-    			this.nodesInSearch.add(edgesInSearch.get(0).getFirstNode());
-    			for(Node node: this.nodes) {
-    				if(node.getAlgorithmValues()[0] < this.nodesInSearch.get(0).getAlgorithmValues()[0]) {
-    					area.drawNode(node, Color.GRAY);
-    				}
-    			}
-    			area.drawNode(edgesInSearch.get(0).getFirstNode(), Color.YELLOW);
-    		}
-    		
-    		stack = new ArrayDeque<Edge>();
-    		
-    		stage = Stage.SEARCH;
-    		searchIndex = 0;
+    		this.nodeStack = new ArrayDeque<Node>();
+    		this.edgeStack = new ArrayDeque<Edge>();
     	}
     	
     	public void step() {
     		switch(stage) {
     		case SEARCH:
-    			if(searchIndex >= edgesInSearch.size()) {
-    				textArea.append("No more edges left to perform depth-first search.\n");
-    				stage = Stage.CALCULATION;
-    				if(edgesInSearch.size() == 0) break;
-    				for(Node node: nodes) {
-    					if(edgesInSearch.get(edgesInSearch.size() - 1).getFirstNode().getAlgorithmValues()[0] < 
-    						node.getAlgorithmValues()[0])
-    						area.drawNode(node, Color.GRAY);
-    				}
-    				//area.drawNode(stack.peekFirst().getFirstNode(), Color.GRAY);
+    			if(objectsInSearch.isEmpty()) {
+    				textArea.append("Depth-first search has finished.\n");
+    				this.stage = Stage.DECISION;
     				break;
     			}
-    			if(edgesInSearch.get(searchIndex).getFirstNode().getAlgorithmValues()[0] -
-    				nodesInSearch.get(nodesInSearch.size() - 1).getAlgorithmValues()[0] > 1) {
-    				for(int i = nodesInSearch.get(nodesInSearch.size() - 1).getAlgorithmValues()[0] + 2;
-    					i < edgesInSearch.get(searchIndex).getFirstNode().getAlgorithmValues()[0]; ++i) {
-    					//textArea.append("No edges from Node " + nodes.get(i-1).getName() + " -- no search.\n" );
-    					area.drawNode(nodes.get(i-1), Color.GRAY);
-    					nodesInSearch.add(nodes.get(i-1));
-    				}
-    			}
-    			if(edgesInSearch.get(searchIndex).getFirstNode().getAlgorithmValues()[0] >
-    			(nodesInSearch.get(nodesInSearch.size() - 1).getAlgorithmValues()[0])) {
-    				nodesInSearch.add(edgesInSearch.get(searchIndex).getFirstNode());
-    			}
-    			Edge current = edgesInSearch.get(searchIndex);
-    			if(stack.size() > 0 && stack.peekFirst().equals(current)) {
-    				if(current.isForward) {
-    					textArea.append("No more edges from " + current.getSecondNode().getName() + ". Returning.\n");
-    					area.drawNode(current.getSecondNode(), Color.GRAY);
+    			
+    			Object current = objectsInSearch.get(0);
+    			
+    			if(current instanceof Node) {
+    				Node currentNode = (Node)current;
+    				if(nodeStack.size() > 0 && nodeStack.peekFirst().equals(currentNode)) {
+    					nodeStack.removeFirst();
+    					textArea.append("No more ways from Node " + currentNode + "\n");
+    					textArea.append("Now coefficients cat be calculated:\n" + 
+    									"\tNode number (entry time) N: " + currentNode.getAlgorithmValues()[0] + "\n" +
+    									"\tNumber of nodes in subtree, including this node D: " +
+    									currentNode.getAlgorithmValues()[1] + "\n" + 
+    									"\tL = min(N - D + 1; {L(\u03bc) | " + currentNode + " -> \u03bc}; " + 
+    									"{N(\u03bc) | "+currentNode+" <- \u03bc}): "+
+    									currentNode.getAlgorithmValues()[2] +
+    									"\n\tH = max(N; {H(\u03bc) | " + currentNode + " -> \u03bc}; {N(\u03bc) | " + 
+    									currentNode +
+    									" <- \u03bc}): " + currentNode.getAlgorithmValues()[3] + "\n");
+    					area.drawNode(currentNode, usedNodeColor);
     				}
     				else {
-    					textArea.append("Edge " + current + " is now oriented backwards.\n");
+    					nodeStack.addFirst(currentNode);
+    					textArea.append("Reached Node " + currentNode + "\n");
+    					area.drawNode(currentNode, activeNodeColor);
     				}
-    				stack.removeFirst();
     			}
     			else {
-    				stack.addFirst(current);
-    				if(current.isForward) {
-    					textArea.append("Using edge " + current + "\n");
-    					area.drawNode(current.getSecondNode(), Color.YELLOW);
+    				Edge currentEdge = (Edge)current;
+    				if(edgeStack.size() > 0 && edgeStack.peekFirst().equals(currentEdge)) {
+    					edgeStack.removeFirst();
+    					if(currentEdge.isForward) {
+    						textArea.append("Returning to " + currentEdge.getFirstNode() + "\n");
+    					}
+    					objectsInSearch.remove(0);
+    					this.step();
+    					return;
     				}
     				else {
-    					textArea.append("Edge " + current + " is not used in depth-first search: node " +
-    									current.getFirstNode().getName() + " was visited earlier.\n");
+    					edgeStack.addFirst(currentEdge);
+    					if(currentEdge.isBackward) {
+    						textArea.append("Edge " + currentEdge + " is not used because " + 
+    						currentEdge.getFirstNode() + " was visited earlier. This edge becomes backward-oriented.\n");
+    						// orienting this edge backward
+    					}
+    					else {
+    						textArea.append("Choosing edge " + currentEdge + " to move on.\n");
+    						// orienting edge
+    					}
     				}
     			}
     			
-    			++searchIndex;
-    			break;
-    		case CALCULATION:
-    			area.clear();
-    			area.drawGraph();
+    			objectsInSearch.remove(0);
     			break;
     		case DECISION:
+    			area.clear();
+    			textArea.append("Edge \u03bc -> \u03bd is a bridge if and only if H(\u03bd) \u2264 N(\u03bd) and " +
+    							"L(\u03bd) > N(\u03bd) - D(\u03bd)\nBridges are highlighted.\n");
+    			for(Edge bridge: this.bridges) {
+    				area.drawEdge(bridge, bridgeColor);
+    			}
+    			area.drawGraph();
+    			stage = Stage.FINISH;
+    			break;
+    		case FINISH:
+    			area.clear();
+    			area.drawGraph();
+    			textArea.append("Algorithm has finished.\n====\n");
     		}
+    		
     	}
     }
 

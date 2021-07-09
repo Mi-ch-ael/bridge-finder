@@ -30,7 +30,6 @@ public class PaintArea extends JLayeredPane {
                         	drawNode(node);
                         }
                     }
-                    currentMode = PaintAreaMode.None;
                     break;
                 case Edge1:
                     Node nd = findNodeByCoordinate(new Point(x1, y1));
@@ -39,8 +38,6 @@ public class PaintArea extends JLayeredPane {
                         y2 = nd.getPoint().y;
                         currentMode = PaintAreaMode.Edge2;
                     }
-                    else
-                        currentMode = PaintAreaMode.None;
                     break;
                 case Edge2:
                     Node nd1 = findNodeByCoordinate(new Point(x1, y1));
@@ -50,7 +47,7 @@ public class PaintArea extends JLayeredPane {
                     		drawEdge(edge);
                     	}
                     }
-                    currentMode = PaintAreaMode.None;
+                    currentMode = PaintAreaMode.Edge1;
                     break;
                 case Erase:
                     Node deletedNode = findNodeByCoordinate(new Point(x1, y1));
@@ -59,7 +56,14 @@ public class PaintArea extends JLayeredPane {
                         clear();
                         drawGraph();
                     }
-                    currentMode = PaintAreaMode.None;
+                    else{
+                        Edge deletedEdge = findEdgeByCoordinate(new Point(x1, y1));
+                        if(deletedEdge != null){
+                            graph.removeEdge(deletedEdge);
+                            clear();
+                            drawGraph();
+                        }
+                    }
                     break;
                 case None:
                     break;
@@ -89,12 +93,26 @@ public class PaintArea extends JLayeredPane {
         currentMode = md;
     }
 
-    private void drawNode(Node node) {
+    public void drawNode(Node node) {
     	this.add(new NodeImage(node.getName(), node.getPoint()));
     }
-
-    private void drawEdge(Edge edge) {
+    
+    public void drawEdge(Edge edge) {
     	this.add(new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint()));
+    }
+    
+    public void drawNode(Node node, Color color) {
+    	NodeImage img = new NodeImage(node.getName(), node.getPoint());
+    	img.setColor(color);
+    	this.add(img);
+    	this.moveToFront(img);
+    }
+
+    public void drawEdge(Edge edge, Color color) {
+    	EdgeImage img = new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint());
+    	img.setColor(color);
+    	this.add(img);
+    	this.moveToFront(img);
     }
     
     public void drawGraph() {
@@ -124,5 +142,21 @@ public class PaintArea extends JLayeredPane {
         return null;
     }
 
-
+    private Edge findEdgeByCoordinate(Point point){
+        for(Edge edge: graph.getEdges()){
+            int EPS = 10;
+            int x1 = edge.getFirstNode().getPoint().x;
+            int y1 = edge.getFirstNode().getPoint().y;
+            int x2 = edge.getSecondNode().getPoint().x;
+            int y2 = edge.getSecondNode().getPoint().y;
+            int minx = Math.min(x1, x2);
+            int miny = Math.min(y1, y2);
+            int maxx = Math.max(x1, x2);
+            int maxy = Math.max(y1, y2);
+            if(point.x > minx && point.y > miny && point.x < maxx && point.y < maxy &&
+            point.x * (y2 - y1) - point.y * (x2 - x1) - x1 * (y2 - y1) + y1 * (x2 - x1) <= EPS )
+                return edge;
+        }
+        return null;
+    }
 }

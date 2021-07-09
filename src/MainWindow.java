@@ -1,5 +1,7 @@
-import java.util.ArrayList;
+import java.util.*;
+
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,6 +12,7 @@ import algorithm.Graph;
 
 public class MainWindow extends JFrame {
 	private final Graph graph;
+	private VisualStatus context;
 
     private PaintArea area;
 
@@ -17,9 +20,12 @@ public class MainWindow extends JFrame {
 
     private JScrollPane scroll;
 
-    private JButton buttonDrawNode;
-    private JButton buttonDrawEdge;
-    private JButton buttonErase;
+    private ButtonGroup buttonGroup;
+
+    private JRadioButton buttonDrawNode;
+    private JRadioButton buttonDrawEdge;
+    private JRadioButton buttonErase;
+
     private JButton buttonOpenFile;
     private JButton buttonSaveInFile;
     private JButton buttonStop;
@@ -30,7 +36,11 @@ public class MainWindow extends JFrame {
     private DrawEdgeActionListener buttonDrawEdgeActionListener;
     private EraseActionListener buttonEraseActionListener;
     private StartActionListener buttonStartActionListener;
+    private NextActionListener buttonNextActionListener;
     private OpenFileActionListener buttonOpenFileActionListener;
+    private StopActionListener buttonStopActionListener;
+    
+    private PaintAreaMode stashedMode;
 
     public MainWindow(){
     	graph = new Graph();
@@ -43,21 +53,30 @@ public class MainWindow extends JFrame {
 
         area = new PaintArea(this.graph);
 
-        textArea = new JTextArea(5, 1);
+        textArea = new JTextArea(10, 1);
         textArea.setOpaque(true);
         textArea.setBackground(Color.WHITE);
-        //textArea.setText("Hello!\n");
         textArea.setEditable(false);
         scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createLineBorder(Color.black));
 
-        buttonDrawNode = new JButton("Draw Node");
-        buttonDrawEdge = new JButton("Draw Edge");
-        buttonErase = new JButton("Erase");
+        buttonGroup = new ButtonGroup();
+
+        buttonDrawNode = new JRadioButton("Draw Node", false);
+        buttonDrawEdge = new JRadioButton("Draw Edge", false);
+        buttonErase = new JRadioButton("Erase", false);
+
+        buttonGroup.add(buttonDrawNode);
+        buttonGroup.add(buttonDrawEdge);
+        buttonGroup.add(buttonErase);
+
+
         buttonOpenFile = new JButton("Open File");
         buttonSaveInFile = new JButton("Save In File");
         buttonStop = new JButton("Stop");
+        buttonStop.setEnabled(false);
         buttonNext = new JButton("Next");
+        buttonNext.setEnabled(false);
         buttonStart = new JButton("Start");
 
         buttonDrawNodeActionListener = new DrawNodeActionListener();
@@ -72,9 +91,14 @@ public class MainWindow extends JFrame {
         buttonStartActionListener = new StartActionListener();
         buttonStart.addActionListener(buttonStartActionListener);
         
+        buttonNextActionListener = new NextActionListener();
+        buttonNext.addActionListener(buttonNextActionListener);
+        
         buttonOpenFileActionListener = new OpenFileActionListener();
         buttonOpenFile.addActionListener(buttonOpenFileActionListener);
 
+        buttonStopActionListener = new StopActionListener();
+        buttonStop.addActionListener(buttonStopActionListener);
 
         Container container = getContentPane();
         container.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -194,15 +218,6 @@ public class MainWindow extends JFrame {
     			}
     			if(line.get(0).length() == 1) graph.addNode(line.get(0));
     			if(line.get(1).length() == 1) graph.addNode(line.get(1));
-    			/*if(!(graph.addNode(line.get(0)))) {
-    				textArea.append("ERROR: Node " + line.get(0) + " is not allowed.\n");
-    				continue;
-    			}
-    			if(!(graph.addNode(line.get(1)))) {
-    				graph.removeNode(line.get(0));
-    				textArea.append("ERROR: Node " + line.get(1) + " is not allowed.\n");
-    				continue;
-    			}*/
     			if(!(graph.addEdge(line.get(0), line.get(1)))) {
     				textArea.append("ERROR: Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
     				textArea.append("\t" + "Either invalid node name has been encountered, or this edge already " + 
@@ -227,18 +242,154 @@ public class MainWindow extends JFrame {
     
     public class StartActionListener implements ActionListener {
     	public void actionPerformed(ActionEvent e) {
-    		textArea.setText("");
+    		stashedMode = area.currentMode;
+    		area.currentMode = PaintAreaMode.None;
+    		for(Enumeration<AbstractButton> enumeration = buttonGroup.getElements();
+    				enumeration.hasMoreElements();) {
+    			AbstractButton processedButton = enumeration.nextElement();
+    			processedButton.setEnabled(false);
+    		}
+    		buttonOpenFile.setEnabled(false);
+    		buttonSaveInFile.setEnabled(false);
+    		buttonStart.setEnabled(false);
+    		buttonStop.setEnabled(true);
+    		buttonNext.setEnabled(true);
+    		
+    		ArrayList<Object> visObjects = graph.getVisualizationObjects();
+    		textArea.append("\nStarting algorithm... Click 'Next' to explore steps.\n====\n");
     		graph.runAlgorithm();
-    		ArrayList<Edge> bridges = graph.getBridges();
-    		if(bridges.size() == 0) {
-    			textArea.append("This graph has no bridges.\n");
-    		}
-    		StringBuilder answer;
-    		for(Edge bridge: bridges) {
-    			answer = new StringBuilder("Edge ");
-    			answer.append(bridge.getFirstNode().getName()).append(" - ").append(bridge.getSecondNode().getName());
-    			textArea.append(answer.append(" is a bridge\n").toString());
-    		}
+    		
+    		context = new VisualStatus(visObjects, graph.getNodes(), graph.getBridges());
     	}
     }
+    
+    public class NextActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		context.step();
+    	}
+    }
+    
+    public class StopActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		for(Enumeration<AbstractButton> enumeration = buttonGroup.getElements();
+    				enumeration.hasMoreElements();) {
+    			enumeration.nextElement().setEnabled(true);
+    		}
+    		buttonOpenFile.setEnabled(true);
+    		buttonSaveInFile.setEnabled(true);
+    		buttonStart.setEnabled(true);
+    		buttonStop.setEnabled(false);
+    		buttonNext.setEnabled(false);
+    		area.currentMode = stashedMode;
+    		area.clear();
+    		area.drawGraph();
+    	}
+    }
+    
+    public static enum Stage {
+		SEARCH,
+		DECISION,
+		FINISH
+	}
+    
+    public class VisualStatus {
+    	private Stage stage;
+    	private ArrayList<Object> objectsInSearch;
+    	private ArrayList<Edge> bridges;
+    	private Deque<Edge> edgeStack;
+    	private Deque<Node> nodeStack;
+    	
+    	private final Color usedNodeColor = Color.LIGHT_GRAY;
+    	private final Color activeNodeColor = Color.YELLOW;
+    	private final Color bridgeColor = Color.RED;
+    	
+    	public VisualStatus(ArrayList<Object> objectsInSearch, ArrayList<Node> nodes, ArrayList<Edge> bridges) {
+    		this.objectsInSearch = objectsInSearch;
+    		this.stage = Stage.SEARCH;
+    		this.bridges = bridges;
+    		this.nodeStack = new ArrayDeque<Node>();
+    		this.edgeStack = new ArrayDeque<Edge>();
+    	}
+    	
+    	public void step() {
+    		switch(stage) {
+    		case SEARCH:
+    			if(objectsInSearch.isEmpty()) {
+    				textArea.append("Depth-first search has finished.\n");
+    				this.stage = Stage.DECISION;
+    				break;
+    			}
+    			
+    			Object current = objectsInSearch.get(0);
+    			
+    			if(current instanceof Node) {
+    				Node currentNode = (Node)current;
+    				if(nodeStack.size() > 0 && nodeStack.peekFirst().equals(currentNode)) {
+    					nodeStack.removeFirst();
+    					textArea.append("No more ways from Node " + currentNode + "\n");
+    					textArea.append("Now coefficients cat be calculated:\n" + 
+    									"\tNode number (entry time) N: " + currentNode.getAlgorithmValues()[0] + "\n" +
+    									"\tNumber of nodes in subtree, including this node D: " +
+    									currentNode.getAlgorithmValues()[1] + "\n" + 
+    									"\tL = min(N - D + 1; {L(\u03bc) | " + currentNode + " -> \u03bc}; " + 
+    									"{N(\u03bc) | "+currentNode+" <- \u03bc}): "+
+    									currentNode.getAlgorithmValues()[2] +
+    									"\n\tH = max(N; {H(\u03bc) | " + currentNode + " -> \u03bc}; {N(\u03bc) | " + 
+    									currentNode +
+    									" <- \u03bc}): " + currentNode.getAlgorithmValues()[3] + "\n");
+    					area.drawNode(currentNode, usedNodeColor);
+    				}
+    				else {
+    					nodeStack.addFirst(currentNode);
+    					textArea.append("Reached Node " + currentNode + "\n");
+    					area.drawNode(currentNode, activeNodeColor);
+    				}
+    			}
+    			else {
+    				Edge currentEdge = (Edge)current;
+    				if(edgeStack.size() > 0 && edgeStack.peekFirst().equals(currentEdge)) {
+    					edgeStack.removeFirst();
+    					if(currentEdge.isForward) {
+    						textArea.append("Returning to " + currentEdge.getFirstNode() + "\n");
+    					}
+    					objectsInSearch.remove(0);
+    					this.step();
+    					return;
+    				}
+    				else {
+    					edgeStack.addFirst(currentEdge);
+    					if(currentEdge.isBackward) {
+    						textArea.append("Edge " + currentEdge + " is not used because " + 
+    						currentEdge.getFirstNode() + " was visited earlier. This edge becomes backward-oriented.\n");
+    						// orienting this edge backward
+    					}
+    					else {
+    						textArea.append("Choosing edge " + currentEdge + " to move on.\n");
+    						// orienting edge
+    					}
+    				}
+    			}
+    			
+    			objectsInSearch.remove(0);
+    			break;
+    		case DECISION:
+    			area.clear();
+    			textArea.append("Edge \u03bc -> \u03bd is a bridge if and only if H(\u03bd) \u2264 N(\u03bd) and " +
+    							"L(\u03bd) > N(\u03bd) - D(\u03bd)\nBridges are highlighted.\n");
+    			for(Edge bridge: this.bridges) {
+    				area.drawEdge(bridge, bridgeColor);
+    			}
+    			area.drawGraph();
+    			stage = Stage.FINISH;
+    			break;
+    		case FINISH:
+    			area.clear();
+    			area.drawGraph();
+    			textArea.append("Algorithm has finished.\n====\n");
+    		}
+    		
+    	}
+    }
+
+    
 }

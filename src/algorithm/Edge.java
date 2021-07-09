@@ -34,5 +34,12 @@ public class Edge {
       isForward = false;
       isBackward = false;
   }
+  
+  @Override
+  public String toString() {
+	  String delimiter;
+	  delimiter = isForward ? " -> " : " <- ";
+	  return this.getFirstNode().getName() + delimiter + this.getSecondNode().getName();
+  }
 }
 

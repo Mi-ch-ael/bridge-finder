@@ -6,6 +6,7 @@ public class Graph {
   private ArrayList<Node> nodes = new ArrayList<>();
   private ArrayList<Edge> edges = new ArrayList<>();
   private ArrayList<Edge> bridges = new ArrayList<>();
+  private ArrayList<Object> visualizationObjects = new ArrayList<>();
 
   public Graph(){}
 
@@ -102,15 +103,17 @@ public class Graph {
 
   public ArrayList<Edge> getBridges(){ return bridges; }
 
+  public ArrayList<Object> getVisualizationObjects(){ return visualizationObjects; }
+
   public void runAlgorithm(){
       bridges.clear();
+      visualizationObjects.clear();
       for(int i = 0; i < edges.size(); i++){
           edges.get(i).reset();
       }
       for(int i = 0; i < nodes.size(); i++){
           nodes.get(i).reset();
       }
-
       int timeDFS = 0;
       for(int i = 0; i < nodes.size(); i++)
           if(nodes.get(i).getAlgorithmValues()[0] == 0)
@@ -132,6 +135,7 @@ public class Graph {
       newAlgorithmValues[2] = timeDFS;
       newAlgorithmValues[3] = timeDFS;
       nodeComponent.setAlgorithmValues(newAlgorithmValues);
+	  visualizationObjects.add(nodeComponent);
 
       for(int i = 0; i < adjacentEdges.size(); i++){
           adjacentEdge = adjacentEdges.get(i);
@@ -144,6 +148,7 @@ public class Graph {
                   adjacentEdge.swapNodes();
               adjacentEdge.isForward = true;
               nextNode.setParentTreeEdge(adjacentEdge);
+              visualizationObjects.add(adjacentEdge);
               timeDFS = algorithmDFS(nextNode, timeDFS);
               newAlgorithmValues[1] += nextNodeAlgorithmValues[1];
               if(nextNodeAlgorithmValues[2] < newAlgorithmValues[2])
@@ -153,6 +158,10 @@ public class Graph {
           } else {
               if(adjacentEdge.getFirstNode() != nodeComponent)
                   adjacentEdge.swapNodes();
+              if(!adjacentEdge.isBackward){
+                visualizationObjects.add(adjacentEdge);
+                visualizationObjects.add(adjacentEdge);
+              }
               adjacentEdge.isBackward = true;
               if(nextNodeAlgorithmValues[0] < newAlgorithmValues[2])
                   newAlgorithmValues[2] = nextNodeAlgorithmValues[0];
@@ -161,9 +170,12 @@ public class Graph {
           }
       }
       nodeComponent.setAlgorithmValues(newAlgorithmValues);
-      if(nodeComponent.getParentTreeEdge() != null)
+	  visualizationObjects.add(nodeComponent);
+      if(nodeComponent.getParentTreeEdge() != null){
+          visualizationObjects.add(nodeComponent.getParentTreeEdge());
           if((newAlgorithmValues[0] == newAlgorithmValues[2])&&(newAlgorithmValues[3] < newAlgorithmValues[0] + newAlgorithmValues[1]))
               nodeComponent.getParentTreeEdge().isBridge = true;
+      }
       return timeDFS;
   }
 
@@ -183,5 +195,6 @@ public class Graph {
       nodes.clear();
       edges.clear();
       bridges.clear();
+      visualizationObjects.clear();
   }
 }

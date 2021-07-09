@@ -71,5 +71,10 @@ public class Node {
       algorithmValues = new int[4];
       parentTreeEdge = null;
   }
+  
+  @Override
+  public String toString() {
+	  return this.name;
+  }
 }
 

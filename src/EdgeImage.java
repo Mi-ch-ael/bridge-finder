@@ -55,6 +55,7 @@ public class EdgeImage extends JComponent{
 
 
     public void setColor(Color color){ this.color = color; }
+    public Color getColor(Color color) { return this.color; }
 
 
     public void paintComponent(Graphics g1){

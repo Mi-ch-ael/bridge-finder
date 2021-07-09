@@ -93,12 +93,26 @@ public class PaintArea extends JLayeredPane {
         currentMode = md;
     }
 
-    private void drawNode(Node node) {
+    public void drawNode(Node node) {
     	this.add(new NodeImage(node.getName(), node.getPoint()));
     }
-
-    private void drawEdge(Edge edge) {
+    
+    public void drawEdge(Edge edge) {
     	this.add(new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint()));
+    }
+    
+    public void drawNode(Node node, Color color) {
+    	NodeImage img = new NodeImage(node.getName(), node.getPoint());
+    	img.setColor(color);
+    	this.add(img);
+    	this.moveToFront(img);
+    }
+
+    public void drawEdge(Edge edge, Color color) {
+    	EdgeImage img = new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint());
+    	img.setColor(color);
+    	this.add(img);
+    	this.moveToFront(img);
     }
     
     public void drawGraph() {

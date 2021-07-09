@@ -1,7 +1,7 @@
-import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.*;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,6 +12,7 @@ import algorithm.Graph;
 
 public class MainWindow extends JFrame {
 	private final Graph graph;
+	private VisualStatus context;
 
     private PaintArea area;
 
@@ -35,6 +36,7 @@ public class MainWindow extends JFrame {
     private DrawEdgeActionListener buttonDrawEdgeActionListener;
     private EraseActionListener buttonEraseActionListener;
     private StartActionListener buttonStartActionListener;
+    private NextActionListener buttonNextActionListener;
     private OpenFileActionListener buttonOpenFileActionListener;
     private StopActionListener buttonStopActionListener;
     
@@ -72,7 +74,9 @@ public class MainWindow extends JFrame {
         buttonOpenFile = new JButton("Open File");
         buttonSaveInFile = new JButton("Save In File");
         buttonStop = new JButton("Stop");
+        buttonStop.setEnabled(false);
         buttonNext = new JButton("Next");
+        buttonNext.setEnabled(false);
         buttonStart = new JButton("Start");
 
         buttonDrawNodeActionListener = new DrawNodeActionListener();
@@ -86,6 +90,9 @@ public class MainWindow extends JFrame {
         
         buttonStartActionListener = new StartActionListener();
         buttonStart.addActionListener(buttonStartActionListener);
+        
+        buttonNextActionListener = new NextActionListener();
+        buttonNext.addActionListener(buttonNextActionListener);
         
         buttonOpenFileActionListener = new OpenFileActionListener();
         buttonOpenFile.addActionListener(buttonOpenFileActionListener);
@@ -244,20 +251,21 @@ public class MainWindow extends JFrame {
     		}
     		buttonOpenFile.setEnabled(false);
     		buttonSaveInFile.setEnabled(false);
+    		buttonStart.setEnabled(false);
+    		buttonStop.setEnabled(true);
+    		buttonNext.setEnabled(true);
     		
-    		textArea.append("\nStarting algorithm...\n====\n");
+    		ArrayList<Edge> visEdges = graph.getVisualizationEdges();
+    		textArea.append("\nStarting algorithm... Click 'Next' to explore steps.\n====\n");
     		graph.runAlgorithm();
     		
-    		ArrayList<Edge> bridges = graph.getBridges();
-    		if(bridges.size() == 0) {
-    			textArea.append("This graph has no bridges.\n");
-    		}
-    		StringBuilder answer;
-    		for(Edge bridge: bridges) {
-    			answer = new StringBuilder("Edge ");
-    			answer.append(bridge.getFirstNode().getName()).append(" - ").append(bridge.getSecondNode().getName());
-    			textArea.append(answer.append(" is a bridge\n").toString());
-    		}
+    		context = new VisualStatus(visEdges, graph.getNodes(), graph.getBridges());
+    	}
+    }
+    
+    public class NextActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		context.step();
     	}
     }
     
@@ -269,8 +277,118 @@ public class MainWindow extends JFrame {
     		}
     		buttonOpenFile.setEnabled(true);
     		buttonSaveInFile.setEnabled(true);
+    		buttonStart.setEnabled(true);
+    		buttonStop.setEnabled(false);
+    		buttonNext.setEnabled(false);
     		area.currentMode = stashedMode;
+    		area.clear();
+    		area.drawGraph();
     	}
     }
+    
+    public static enum Stage {
+		SEARCH,
+		CALCULATION,
+		DECISION
+	}
+    
+    public class VisualStatus {
+    	private Stage stage;
+    	private int searchIndex;
+    	private ArrayList<Edge> edgesInSearch;
+    	private ArrayList<Node> nodesInSearch;
+    	private ArrayList<Node> nodes;
+    	//private ArrayList<Edge> edges;
+    	private ArrayList<Edge> bridges;
+    	private Deque<Edge> stack;
+    	
+    	public VisualStatus(ArrayList<Edge> edgesInSearch, ArrayList<Node> nodes, ArrayList<Edge> bridges) {
+    		this.edgesInSearch = new ArrayList<Edge>();
+    		this.edgesInSearch.addAll(edgesInSearch);
+    		this.nodesInSearch = new ArrayList<Node>();
+    		
+    		this.nodes = new ArrayList<Node>();
+    		this.nodes.addAll(nodes);
+    		this.nodes.sort( (nd1, nd2) -> nd1.getAlgorithmValues()[0] - nd2.getAlgorithmValues()[0] );
+    		this.bridges = bridges;
+    		
+    		if(edgesInSearch.size() > 0) {
+    			this.nodesInSearch.add(edgesInSearch.get(0).getFirstNode());
+    			for(Node node: this.nodes) {
+    				if(node.getAlgorithmValues()[0] < this.nodesInSearch.get(0).getAlgorithmValues()[0]) {
+    					area.drawNode(node, Color.GRAY);
+    				}
+    			}
+    			area.drawNode(edgesInSearch.get(0).getFirstNode(), Color.YELLOW);
+    		}
+    		
+    		stack = new ArrayDeque<Edge>();
+    		
+    		stage = Stage.SEARCH;
+    		searchIndex = 0;
+    	}
+    	
+    	public void step() {
+    		switch(stage) {
+    		case SEARCH:
+    			if(searchIndex >= edgesInSearch.size()) {
+    				textArea.append("No more edges left to perform depth-first search.\n");
+    				stage = Stage.CALCULATION;
+    				if(edgesInSearch.size() == 0) break;
+    				for(Node node: nodes) {
+    					if(edgesInSearch.get(edgesInSearch.size() - 1).getFirstNode().getAlgorithmValues()[0] < 
+    						node.getAlgorithmValues()[0])
+    						area.drawNode(node, Color.GRAY);
+    				}
+    				//area.drawNode(stack.peekFirst().getFirstNode(), Color.GRAY);
+    				break;
+    			}
+    			if(edgesInSearch.get(searchIndex).getFirstNode().getAlgorithmValues()[0] -
+    				nodesInSearch.get(nodesInSearch.size() - 1).getAlgorithmValues()[0] > 1) {
+    				for(int i = nodesInSearch.get(nodesInSearch.size() - 1).getAlgorithmValues()[0] + 2;
+    					i < edgesInSearch.get(searchIndex).getFirstNode().getAlgorithmValues()[0]; ++i) {
+    					//textArea.append("No edges from Node " + nodes.get(i-1).getName() + " -- no search.\n" );
+    					area.drawNode(nodes.get(i-1), Color.GRAY);
+    					nodesInSearch.add(nodes.get(i-1));
+    				}
+    			}
+    			if(edgesInSearch.get(searchIndex).getFirstNode().getAlgorithmValues()[0] >
+    			(nodesInSearch.get(nodesInSearch.size() - 1).getAlgorithmValues()[0])) {
+    				nodesInSearch.add(edgesInSearch.get(searchIndex).getFirstNode());
+    			}
+    			Edge current = edgesInSearch.get(searchIndex);
+    			if(stack.size() > 0 && stack.peekFirst().equals(current)) {
+    				if(current.isForward) {
+    					textArea.append("No more edges from " + current.getSecondNode().getName() + ". Returning.\n");
+    					area.drawNode(current.getSecondNode(), Color.GRAY);
+    				}
+    				else {
+    					textArea.append("Edge " + current + " is now oriented backwards.\n");
+    				}
+    				stack.removeFirst();
+    			}
+    			else {
+    				stack.addFirst(current);
+    				if(current.isForward) {
+    					textArea.append("Using edge " + current + "\n");
+    					area.drawNode(current.getSecondNode(), Color.YELLOW);
+    				}
+    				else {
+    					textArea.append("Edge " + current + " is not used in depth-first search: node " +
+    									current.getFirstNode().getName() + " was visited earlier.\n");
+    				}
+    			}
+    			
+    			++searchIndex;
+    			break;
+    		case CALCULATION:
+    			area.clear();
+    			area.drawGraph();
+    			break;
+    		case DECISION:
+    		}
+    	}
+    }
+
     
 }

@@ -22,6 +22,10 @@ public class PaintArea extends JLayeredPane {
 
             switch(currentMode) {
                 case Node:
+                    if (findNodeByCoordinate(new Point(x1, y1)) != null) {
+                        JOptionPane.showMessageDialog(null, "Do not put nodes too close");
+                        return;
+                    }
                     String s = (String) JOptionPane.showInputDialog(null, "Enter a Node name (single character):\n");
                     if(s != null && s.length() == 1) {
                         if(graph.addNode(s)) {
@@ -80,7 +84,7 @@ public class PaintArea extends JLayeredPane {
         setOpaque(true);
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createLineBorder(Color.black));
-        setMinimumSize(new Dimension(400, 400));
+
 
         currentMode = PaintAreaMode.None;
 
@@ -100,12 +104,26 @@ public class PaintArea extends JLayeredPane {
     public void drawEdge(Edge edge) {
     	this.add(new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint()));
     }
+
+    public void drawArrow(Edge edge) {
+        EdgeImage arrow = new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint());
+        arrow.transformIntoArrow();
+        add(arrow);
+    }
     
     public void drawNode(Node node, Color color) {
     	NodeImage img = new NodeImage(node.getName(), node.getPoint());
     	img.setColor(color);
     	this.add(img);
     	this.moveToFront(img);
+    }
+
+    public void drawNode(Node node, Color color, String[] text) {
+        NodeImage img = new NodeImage(node.getName(), node.getPoint());
+        img.setText(text);
+        img.setColor(color);
+        this.add(img);
+        this.moveToFront(img);
     }
 
     public void drawEdge(Edge edge, Color color) {
@@ -136,7 +154,7 @@ public class PaintArea extends JLayeredPane {
 
     private Node findNodeByCoordinate(Point point){
         for(Node nd: graph.getNodes()){  
-            if(Math.pow((point.x - nd.getPoint().x), 2) + Math.pow((point.y - nd.getPoint().y), 2) < 700 )
+            if(Math.pow((point.x - nd.getPoint().x), 2) + Math.pow((point.y - nd.getPoint().y), 2) < 3500 )
                 return nd;
         }
         return null;

@@ -225,7 +225,7 @@ public class MainWindow extends JFrame {
     			}
     		}
     		
-    		int radius = Math.min(area.getBounds().height, area.getBounds().width) / 2 - 35;
+    		int radius = Math.min(area.getBounds().height, area.getBounds().width) / 2 - NodeImage.SIZE/2;
     		int xCenter = area.getBounds().width/2;
     		int yCenter = area.getBounds().height/2;
     		
@@ -337,7 +337,9 @@ public class MainWindow extends JFrame {
     									"\n\tH = max(N; {H(\u03bc) | " + currentNode + " -> \u03bc}; {N(\u03bc) | " + 
     									currentNode +
     									" <- \u03bc}): " + currentNode.getAlgorithmValues()[3] + "\n");
-    					area.drawNode(currentNode, usedNodeColor);
+    					area.drawNode(currentNode, usedNodeColor, new String[] {String.valueOf(currentNode.getAlgorithmValues()[0]),
+								String.valueOf(currentNode.getAlgorithmValues()[1]), String.valueOf(currentNode.getAlgorithmValues()[2]),
+								String.valueOf(currentNode.getAlgorithmValues()[3])});
     				}
     				else {
     					nodeStack.addFirst(currentNode);
@@ -362,6 +364,7 @@ public class MainWindow extends JFrame {
     						textArea.append("Edge " + currentEdge + " is not used because " + 
     						currentEdge.getFirstNode() + " was visited earlier. This edge becomes backward-oriented.\n");
     						// orienting this edge backward
+							area.drawArrow(currentEdge);
     					}
     					else {
     						textArea.append("Choosing edge " + currentEdge + " to move on.\n");

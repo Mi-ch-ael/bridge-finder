@@ -56,7 +56,7 @@ public class MainWindow extends JFrame {
         textArea = new JTextArea(10, 1);
         textArea.setOpaque(true);
         textArea.setBackground(Color.WHITE);
-        textArea.setEditable(false);
+        textArea.setEditable(true);
         scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createLineBorder(Color.black));
 
@@ -254,6 +254,7 @@ public class MainWindow extends JFrame {
     		buttonStart.setEnabled(false);
     		buttonStop.setEnabled(true);
     		buttonNext.setEnabled(true);
+    		textArea.setEditable(false);
     		
     		ArrayList<Object> visObjects = graph.getVisualizationObjects();
     		textArea.append("\nStarting algorithm... Click 'Next' to explore steps.\n====\n");
@@ -280,6 +281,7 @@ public class MainWindow extends JFrame {
     		buttonStart.setEnabled(true);
     		buttonStop.setEnabled(false);
     		buttonNext.setEnabled(false);
+    		textArea.setEditable(true);
     		area.currentMode = stashedMode;
     		area.clear();
     		area.drawGraph();
@@ -301,7 +303,9 @@ public class MainWindow extends JFrame {
     	
     	private final Color usedNodeColor = Color.LIGHT_GRAY;
     	private final Color activeNodeColor = Color.YELLOW;
+    	private final Color backwardEdgeColor = Color.BLUE;
     	private final Color bridgeColor = Color.RED;
+    	
     	
     	public VisualStatus(ArrayList<Object> objectsInSearch, ArrayList<Node> nodes, ArrayList<Edge> bridges) {
     		this.objectsInSearch = objectsInSearch;
@@ -363,12 +367,11 @@ public class MainWindow extends JFrame {
     					if(currentEdge.isBackward) {
     						textArea.append("Edge " + currentEdge + " is not used because " + 
     						currentEdge.getFirstNode() + " was visited earlier. This edge becomes backward-oriented.\n");
-    						// orienting this edge backward
-							area.drawArrow(currentEdge);
+							area.drawArrow(currentEdge, backwardEdgeColor);
     					}
     					else {
     						textArea.append("Choosing edge " + currentEdge + " to move on.\n");
-    						// orienting edge
+    						area.drawArrow(currentEdge);
     					}
     				}
     			}
@@ -378,9 +381,10 @@ public class MainWindow extends JFrame {
     		case DECISION:
     			area.clear();
     			textArea.append("Edge \u03bc -> \u03bd is a bridge if and only if H(\u03bd) \u2264 N(\u03bd) and " +
-    							"L(\u03bd) > N(\u03bd) - D(\u03bd)\nBridges are highlighted.\n");
+    							"L(\u03bd) > N(\u03bd) - D(\u03bd)\nBridges are highlighted:\n");
     			for(Edge bridge: this.bridges) {
     				area.drawEdge(bridge, bridgeColor);
+    				textArea.append(bridge + "\n");
     			}
     			area.drawGraph();
     			stage = Stage.FINISH;

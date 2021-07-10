@@ -23,7 +23,8 @@ public class PaintArea extends JLayeredPane {
             switch(currentMode) {
                 case Node:
                     if (findNodeByCoordinate(new Point(x1, y1)) != null) {
-                        JOptionPane.showMessageDialog(null, "Do not put nodes too close.");
+                        JOptionPane.showMessageDialog(null, "Do not put nodes too close.", "Illegal node placement",
+                        		JOptionPane.WARNING_MESSAGE);
                         return;
                     }
                     String s = (String) JOptionPane.showInputDialog(null, "Enter a Node name (single character):\n");
@@ -34,8 +35,15 @@ public class PaintArea extends JLayeredPane {
                         	drawNode(node);
                         }
                         else{
-                            JOptionPane.showMessageDialog(null, "Nodes cannot be named with the same name.");
+                            JOptionPane.showMessageDialog(null, "Nodes cannot be named with the same name.",
+                            		"Illegal node name", JOptionPane.WARNING_MESSAGE);
                         }
+                    }
+                    else {
+                    	if(s != null) {
+                    		JOptionPane.showMessageDialog(null, "Node name must contain a single symbol.",
+                    				"Illegal node name", JOptionPane.WARNING_MESSAGE);
+                    	}
                     }
                     break;
                 case Edge1:
@@ -52,6 +60,10 @@ public class PaintArea extends JLayeredPane {
                     	Edge edge = new Edge(findNodeByCoordinate(new Point(x2, y2)), nd1);
                     	if(graph.addEdge(edge)) {
                     		drawEdge(edge);
+                    	}
+                    	else {
+                    		JOptionPane.showMessageDialog(null, "Parallel edges and loops are not supported.",
+                    				"Illegal edge", JOptionPane.WARNING_MESSAGE);
                     	}
                     }
                     currentMode = PaintAreaMode.Edge1;
@@ -101,7 +113,9 @@ public class PaintArea extends JLayeredPane {
     }
 
     public void drawNode(Node node) {
-    	this.add(new NodeImage(node.getName(), node.getPoint()));
+    	NodeImage img = new NodeImage(node.getName(), node.getPoint());
+    	this.add(img);
+    	this.moveToFront(img);
     }
     
     public void drawEdge(Edge edge) {
@@ -112,6 +126,13 @@ public class PaintArea extends JLayeredPane {
         EdgeImage arrow = new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint());
         arrow.transformIntoArrow();
         add(arrow);
+    }
+    
+    public void drawArrow(Edge edge, Color color) {
+    	EdgeImage arrow = new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint());
+    	arrow.transformIntoArrow();
+    	arrow.setColor(color);
+    	add(arrow);
     }
     
     public void drawNode(Node node, Color color) {

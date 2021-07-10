@@ -97,7 +97,7 @@ public class EdgeImage extends JComponent{
             Graphics2D g = (Graphics2D) g1.create();
             g.transform(at);
             len += 5;
-            drawThickLine(g, 0, 0, len, 0, 3, Color.BLACK);
+            drawThickLine(g, 0, 0, len, 0, 3, color);
             g.fillPolygon(new int[] {len, len-ARR_SIZE, len-ARR_SIZE, len},
                     new int[] {0, -ARR_SIZE, ARR_SIZE, 0}, 3);
         }

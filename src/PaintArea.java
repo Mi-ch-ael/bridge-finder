@@ -23,7 +23,7 @@ public class PaintArea extends JLayeredPane {
             switch(currentMode) {
                 case Node:
                     if (findNodeByCoordinate(new Point(x1, y1)) != null) {
-                        JOptionPane.showMessageDialog(null, "Do not put nodes too close");
+                        JOptionPane.showMessageDialog(null, "Do not put nodes too close.");
                         return;
                     }
                     String s = (String) JOptionPane.showInputDialog(null, "Enter a Node name (single character):\n");
@@ -32,6 +32,9 @@ public class PaintArea extends JLayeredPane {
                         	Node node = graph.getNodeByName(s);
                         	node.setPoint(x1, y1);
                         	drawNode(node);
+                        }
+                        else{
+                            JOptionPane.showMessageDialog(null, "Nodes cannot be named with the same name.");
                         }
                     }
                     break;

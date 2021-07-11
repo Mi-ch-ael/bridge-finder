@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.awt.Component;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -10,12 +8,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 class FileReaderWrapper {
 	private Path path = null;
-	private String filename = null;
-	
-	public static enum Mode {
-		SAVEFILE,
-		INPUTFILE
-	}
+	//private String filename = null;
 	
 	public FileReaderWrapper() {}
 	
@@ -24,7 +17,7 @@ class FileReaderWrapper {
 		String filename;
 		
 		JFileChooser chooser = new JFileChooser(".");
-		chooser.setFileFilter(new FileNameExtensionFilter("Input files and save files", "bfin", "bfsv"));
+		chooser.setFileFilter(new FileNameExtensionFilter("Input files and save files", "txt", "bfsv"));
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		chooser.setAcceptAllFileFilterUsed(false);
 		
@@ -48,11 +41,11 @@ class FileReaderWrapper {
 			return null;
 		}
 		
-		this.filename = filename;
+		//this.filename = filename;
 		return filename;
 	}
 	
-	public ArrayList<ArrayList<String>> read(Mode mode) {
+	public ArrayList<ArrayList<String>> read() {
 		ArrayList<String> lines = new ArrayList<String>();
 		try {
 			lines = (ArrayList<String>)Files.readAllLines(path, StandardCharsets.UTF_8);

@@ -1,0 +1,12 @@
+BFSV
+5 blabla
+A 100 100
+B 200 150
+C 200 300
+D 500 500
+E 40 500
+Q A
+A B
+A E
+E D
+A A

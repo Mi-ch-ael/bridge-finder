@@ -195,7 +195,7 @@ public class PaintArea extends JLayeredPane {
             int miny = Math.min(y1, y2);
             int maxx = Math.max(x1, x2);
             int maxy = Math.max(y1, y2);
-            if(point.x > minx && point.y > miny && point.x < maxx && point.y < maxy &&
+            if(point.x >= minx && point.y >= miny && point.x <= maxx && point.y <= maxy &&
             point.x * (y2 - y1) - point.y * (x2 - x1) - x1 * (y2 - y1) + y1 * (x2 - x1) <= EPS )
                 return edge;
         }

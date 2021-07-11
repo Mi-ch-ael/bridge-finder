@@ -196,30 +196,66 @@ public class MainWindow extends JFrame {
     }
     
     public class OpenFileActionListener implements ActionListener {
+    	private final String SAVEFILE_SIGNATURE = "BFSV\u0002";
+    	private final String ERROR_PREFIX = "ERROR: ";
+    	private final String INFO_PREFIX = "INFO: ";
+    	
     	public void actionPerformed(ActionEvent e) {
     		textArea.setText("");
     		FileReaderWrapper wrapper = new FileReaderWrapper();
     		if(wrapper.open(MainWindow.this) == null) {
-    			textArea.append("INFO: File has not been chosen or has not been found.\n");
+    			textArea.append(INFO_PREFIX + "File has not been chosen or has not been found.\n");
     			return;
     		}
     		
-    		ArrayList<ArrayList<String>> content = wrapper.read(FileReaderWrapper.Mode.SAVEFILE);
+    		ArrayList<ArrayList<String>> content = wrapper.read();
     		if(content == null) {
-    			textArea.setText("ERROR: Failed to parse file.\n");
+    			textArea.setText(ERROR_PREFIX + "Failed to parse file.\n");
+    			JOptionPane.showMessageDialog(null, "Failed to parse file.",
+        				"Input error", JOptionPane.ERROR_MESSAGE);
     			return;
     		}
+    		
     		graph.reset();
     		
+    		boolean nonFatalErrorFlag = false;
+    		if(content.size() > 0 && content.get(0).size() > 0 && content.get(0).get(0).equals(SAVEFILE_SIGNATURE)) {
+    			content.remove(0);
+    			try {
+    				nonFatalErrorFlag = createGraphFromSaveData(content);
+    			}
+    			catch(Exception ex) {
+    				area.clear();
+    				JOptionPane.showMessageDialog(null,"File structure does not correspond with a save file structure.",
+            				"Fatal file interpretation error", JOptionPane.ERROR_MESSAGE);
+    			}
+    		}
+    		else {
+    			nonFatalErrorFlag = createGraphFromInput(content);
+    		}
+    		
+    		area.clear();
+    		area.drawGraph();
+    		
+    		if(nonFatalErrorFlag) {
+				JOptionPane.showMessageDialog(null,"Errors occurred while creating a graph. Check log for information.",
+						"File interpretation error", JOptionPane.WARNING_MESSAGE);
+			}
+    	}
+    	
+    	private boolean createGraphFromInput(ArrayList<ArrayList<String>> content) {
+    		boolean errorFlag = false;
     		for(ArrayList<String> line: content) {
     			if(line.size() != 2) {
-    				textArea.append("WARNING: Input line doesn't describe an edge: "+line.toString()+". Ignored.\n");
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX+"Input line doesn't describe an edge: "+line.toString()+". Ignored.\n");
     				continue;
     			}
     			if(line.get(0).length() == 1) graph.addNode(line.get(0));
     			if(line.get(1).length() == 1) graph.addNode(line.get(1));
     			if(!(graph.addEdge(line.get(0), line.get(1)))) {
-    				textArea.append("ERROR: Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
     				textArea.append("\t" + "Either invalid node name has been encountered, or this edge already " + 
     				"exists, or this edge is a loop.\n");
     			}
@@ -234,9 +270,97 @@ public class MainWindow extends JFrame {
     			double angle = 2*i*Math.PI/lst.size();
     			lst.get(i).setPoint(new algorithm.Point((int)(xCenter + radius*Math.cos(angle)), (int)(yCenter + radius*Math.sin(angle))));
     		}
+    		return errorFlag;
+    	}
+    	
+    	private boolean createGraphFromSaveData(ArrayList<ArrayList<String>> content) {
+    		boolean errorFlag = false;
+    		int expectedNodesCount;
+    		textArea.append(INFO_PREFIX + "Save file signature recognized.\n");
+    		try {
+    			expectedNodesCount = Integer.parseInt(content.get(0).get(0));
+    			content.remove(0);
+    		}
+    		catch(Exception ex) {
+    			throw ex;
+    		}
     		
-    		area.clear();
-    		area.drawGraph();
+    		int nodeCounter = 0;
+    		ArrayList<String> names = new ArrayList<String>();
+    		ArrayList<Integer> xValues = new ArrayList<Integer>();
+    		ArrayList<Integer> yValues = new ArrayList<Integer>();
+    		
+    		while(content.size() > 0 && content.get(0).size() >= 3) {
+    			ArrayList<String> line = content.get(0);
+    			try {
+    				names.add(line.get(0));
+    				xValues.add(Integer.valueOf(Integer.parseInt(line.get(1))));
+    				yValues.add(Integer.valueOf(Integer.parseInt(line.get(2))));
+    			}
+    			catch(Exception ex) {
+    				textArea.append(ERROR_PREFIX + "Node " + line.get(0) + " coordinates don't seem to be valid.\n");
+    				throw ex;
+    			}
+    			if(line.size() > 3) {
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Extra characters in a line describing node.\n");
+    			}
+    			if(xValues.get(xValues.size() - 1) > area.getWidth() || 
+    					yValues.get(yValues.size() - 1) > area.getHeight()) {
+    				textArea.append(INFO_PREFIX + "Coordinates larger than the canvas size may cause problems.\n");
+    			}
+    			++nodeCounter;
+    			content.remove(0);
+    		}
+    		if(nodeCounter != expectedNodesCount) {
+    			errorFlag = true;
+    			textArea.append(ERROR_PREFIX + 
+    					"Declared number of nodes does not match number of nodes present in a file.\n");
+    		}
+    		
+    		for(int i = 0; i < names.size(); ++i) {
+    			if(names.get(i).length() == 1) {
+    				if(graph.addNode(names.get(i))) {
+    					if(xValues.get(i) < NodeImage.SIZE/2) {
+    						xValues.set(i, NodeImage.SIZE/2);
+    						errorFlag = true;
+    						textArea.append(ERROR_PREFIX+"Node is too close to the upper-left border or " +
+    						"has negative coordinates. Changed node placement to the very edge of the working area.\n");
+    					}
+    					if(yValues.get(i) < NodeImage.SIZE/2) {
+    						yValues.set(i, NodeImage.SIZE/2);
+    						errorFlag = true;
+    						textArea.append(ERROR_PREFIX+"Node is too close to the upper-left border or " +
+    						"has negative coordinates. Changed node placement to the very edge of the working area.\n");
+    					}
+    					graph.getNodeByName(names.get(i)).setPoint(xValues.get(i), yValues.get(i));
+    				}
+    				else {
+    					errorFlag = true;
+    					textArea.append(ERROR_PREFIX + "Node " + names.get(i) + " already exists.\n");
+    				}
+    			}
+    			else {
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Illegal node name: '" + names.get(i) + "'\n");
+    			}
+    		}
+    		
+    		for(ArrayList<String> line: content) {
+    			if(line.size() == 2) {
+    				if(!graph.addEdge(line.get(0), line.get(1))) {
+    					errorFlag = true;
+    					textArea.append(ERROR_PREFIX + "Edge " + line.get(0) + " - " + line.get(1) + 
+    					" could not be added. Either nodes don't exist or edge already exists or edge is a loop.\n");
+    				}
+    			}
+    			else {
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Line does not describe an edge: " + line + " Ignored.\n");
+    			}
+    		}
+    		
+    		return errorFlag;
     	}
     }
     

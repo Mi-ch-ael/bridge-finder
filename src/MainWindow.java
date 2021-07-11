@@ -39,6 +39,7 @@ public class MainWindow extends JFrame {
     private NextActionListener buttonNextActionListener;
     private OpenFileActionListener buttonOpenFileActionListener;
     private StopActionListener buttonStopActionListener;
+    private SaveInFileActionListener buttonSaveInFileActionListener;
     
     private PaintAreaMode stashedMode;
 
@@ -99,6 +100,9 @@ public class MainWindow extends JFrame {
 
         buttonStopActionListener = new StopActionListener();
         buttonStop.addActionListener(buttonStopActionListener);
+        
+        buttonSaveInFileActionListener = new SaveInFileActionListener();
+        buttonSaveInFile.addActionListener(buttonSaveInFileActionListener);
 
         Container container = getContentPane();
         container.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -204,7 +208,7 @@ public class MainWindow extends JFrame {
     		textArea.setText("");
     		FileReaderWrapper wrapper = new FileReaderWrapper();
     		if(wrapper.open(MainWindow.this) == null) {
-    			textArea.append(INFO_PREFIX + "File has not been chosen or has not been found.\n");
+    			textArea.append(INFO_PREFIX + "File has not been chosen.\n");
     			return;
     		}
     		
@@ -361,6 +365,19 @@ public class MainWindow extends JFrame {
     		}
     		
     		return errorFlag;
+    	}
+    }
+    
+    public class SaveInFileActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		FileWriterWrapper wrapper = new FileWriterWrapper();
+    		if(!wrapper.open(MainWindow.this)) {
+    			textArea.append("INFO: File was not chosen or could not be opened.\n");
+    			return;
+    		}
+    		if(!wrapper.write(graph)) {
+    			textArea.append("ERROR: Failed to save graph in file.\n");
+    		}
     	}
     }
     

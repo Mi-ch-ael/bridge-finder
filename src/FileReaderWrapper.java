@@ -30,7 +30,6 @@ class FileReaderWrapper {
 		
 		if(dialogResult != JFileChooser.APPROVE_OPTION) return null;
 		
-		//filename = chooser.getSelectedFile().getName();
 		filename = chooser.getSelectedFile().getAbsolutePath();
 		if(filename.length() == 0) return null;
 		

@@ -22,7 +22,7 @@ public class PaintArea extends JLayeredPane {
 
             switch(currentMode) {
                 case Node:
-                    if (findNodeByCoordinate(new Point(x1, y1)) != null) {
+                    if (findNodeByCoordinate(new Point(x1, y1), 2500) != null) {
                         JOptionPane.showMessageDialog(null, "Do not put nodes too close.", "Illegal node placement",
                         		JOptionPane.WARNING_MESSAGE);
                         return;
@@ -47,7 +47,7 @@ public class PaintArea extends JLayeredPane {
                     }
                     break;
                 case Edge1:
-                    Node nd = findNodeByCoordinate(new Point(x1, y1));
+                    Node nd = findNodeByCoordinate(new Point(x1, y1), 100);
                     if(nd != null) {
                         x2 = nd.getPoint().x;
                         y2 = nd.getPoint().y;
@@ -55,9 +55,9 @@ public class PaintArea extends JLayeredPane {
                     }
                     break;
                 case Edge2:
-                    Node nd1 = findNodeByCoordinate(new Point(x1, y1));
+                    Node nd1 = findNodeByCoordinate(new Point(x1, y1), 100);
                     if(nd1 != null) {
-                    	Edge edge = new Edge(findNodeByCoordinate(new Point(x2, y2)), nd1);
+                    	Edge edge = new Edge(findNodeByCoordinate(new Point(x2, y2), 100), nd1);
                     	if(graph.addEdge(edge)) {
                     		drawEdge(edge);
                     	}
@@ -69,7 +69,7 @@ public class PaintArea extends JLayeredPane {
                     currentMode = PaintAreaMode.Edge1;
                     break;
                 case Erase:
-                    Node deletedNode = findNodeByCoordinate(new Point(x1, y1));
+                    Node deletedNode = findNodeByCoordinate(new Point(x1, y1), 0);
                     if(deletedNode != null) {
                     	graph.removeNode(deletedNode);
                         clear();
@@ -176,9 +176,9 @@ public class PaintArea extends JLayeredPane {
     	}
     }
 
-    private Node findNodeByCoordinate(Point point){
+    private Node findNodeByCoordinate(Point point, int EPS){
         for(Node nd: graph.getNodes()){  
-            if(Math.pow((point.x - nd.getPoint().x), 2) + Math.pow((point.y - nd.getPoint().y), 2) < 3500 )
+            if(Math.pow((point.x - nd.getPoint().x), 2) + Math.pow((point.y - nd.getPoint().y), 2) < Math.pow(NodeImage.SIZE/2, 2) + EPS )
                 return nd;
         }
         return null;

@@ -22,6 +22,11 @@ public class PaintArea extends JLayeredPane {
 
             switch(currentMode) {
                 case Node:
+                    if (findNodeByCoordinate(new Point(x1, y1), 2500) != null) {
+                        JOptionPane.showMessageDialog(null, "Do not put nodes too close.", "Illegal node placement",
+                        		JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
                     String s = (String) JOptionPane.showInputDialog(null, "Enter a Node name (single character):\n");
                     if(s != null && s.length() == 1) {
                         if(graph.addNode(s)) {
@@ -29,10 +34,20 @@ public class PaintArea extends JLayeredPane {
                         	node.setPoint(x1, y1);
                         	drawNode(node);
                         }
+                        else{
+                            JOptionPane.showMessageDialog(null, "Nodes cannot be named with the same name.",
+                            		"Illegal node name", JOptionPane.WARNING_MESSAGE);
+                        }
+                    }
+                    else {
+                    	if(s != null) {
+                    		JOptionPane.showMessageDialog(null, "Node name must contain a single symbol.",
+                    				"Illegal node name", JOptionPane.WARNING_MESSAGE);
+                    	}
                     }
                     break;
                 case Edge1:
-                    Node nd = findNodeByCoordinate(new Point(x1, y1));
+                    Node nd = findNodeByCoordinate(new Point(x1, y1), 100);
                     if(nd != null) {
                         x2 = nd.getPoint().x;
                         y2 = nd.getPoint().y;
@@ -40,17 +55,21 @@ public class PaintArea extends JLayeredPane {
                     }
                     break;
                 case Edge2:
-                    Node nd1 = findNodeByCoordinate(new Point(x1, y1));
+                    Node nd1 = findNodeByCoordinate(new Point(x1, y1), 100);
                     if(nd1 != null) {
-                    	Edge edge = new Edge(findNodeByCoordinate(new Point(x2, y2)), nd1);
+                    	Edge edge = new Edge(findNodeByCoordinate(new Point(x2, y2), 100), nd1);
                     	if(graph.addEdge(edge)) {
                     		drawEdge(edge);
+                    	}
+                    	else {
+                    		JOptionPane.showMessageDialog(null, "Parallel edges and loops are not supported.",
+                    				"Illegal edge", JOptionPane.WARNING_MESSAGE);
                     	}
                     }
                     currentMode = PaintAreaMode.Edge1;
                     break;
                 case Erase:
-                    Node deletedNode = findNodeByCoordinate(new Point(x1, y1));
+                    Node deletedNode = findNodeByCoordinate(new Point(x1, y1), 0);
                     if(deletedNode != null) {
                     	graph.removeNode(deletedNode);
                         clear();
@@ -80,7 +99,7 @@ public class PaintArea extends JLayeredPane {
         setOpaque(true);
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createLineBorder(Color.black));
-        setMinimumSize(new Dimension(400, 400));
+
 
         currentMode = PaintAreaMode.None;
 
@@ -94,11 +113,26 @@ public class PaintArea extends JLayeredPane {
     }
 
     public void drawNode(Node node) {
-    	this.add(new NodeImage(node.getName(), node.getPoint()));
+    	NodeImage img = new NodeImage(node.getName(), node.getPoint());
+    	this.add(img);
+    	this.moveToFront(img);
     }
     
     public void drawEdge(Edge edge) {
     	this.add(new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint()));
+    }
+
+    public void drawArrow(Edge edge) {
+        EdgeImage arrow = new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint());
+        arrow.transformIntoArrow();
+        add(arrow);
+    }
+    
+    public void drawArrow(Edge edge, Color color) {
+    	EdgeImage arrow = new EdgeImage(edge.getFirstNode().getPoint(), edge.getSecondNode().getPoint());
+    	arrow.transformIntoArrow();
+    	arrow.setColor(color);
+    	add(arrow);
     }
     
     public void drawNode(Node node, Color color) {
@@ -106,6 +140,14 @@ public class PaintArea extends JLayeredPane {
     	img.setColor(color);
     	this.add(img);
     	this.moveToFront(img);
+    }
+
+    public void drawNode(Node node, Color color, String[] text) {
+        NodeImage img = new NodeImage(node.getName(), node.getPoint());
+        img.setText(text);
+        img.setColor(color);
+        this.add(img);
+        this.moveToFront(img);
     }
 
     public void drawEdge(Edge edge, Color color) {
@@ -134,9 +176,9 @@ public class PaintArea extends JLayeredPane {
     	}
     }
 
-    private Node findNodeByCoordinate(Point point){
+    private Node findNodeByCoordinate(Point point, int EPS){
         for(Node nd: graph.getNodes()){  
-            if(Math.pow((point.x - nd.getPoint().x), 2) + Math.pow((point.y - nd.getPoint().y), 2) < 700 )
+            if(Math.pow((point.x - nd.getPoint().x), 2) + Math.pow((point.y - nd.getPoint().y), 2) < Math.pow(NodeImage.SIZE/2, 2) + EPS )
                 return nd;
         }
         return null;
@@ -153,7 +195,7 @@ public class PaintArea extends JLayeredPane {
             int miny = Math.min(y1, y2);
             int maxx = Math.max(x1, x2);
             int maxy = Math.max(y1, y2);
-            if(point.x > minx && point.y > miny && point.x < maxx && point.y < maxy &&
+            if(point.x >= minx && point.y >= miny && point.x <= maxx && point.y <= maxy &&
             point.x * (y2 - y1) - point.y * (x2 - x1) - x1 * (y2 - y1) + y1 * (x2 - x1) <= EPS )
                 return edge;
         }

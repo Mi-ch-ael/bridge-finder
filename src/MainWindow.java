@@ -39,6 +39,7 @@ public class MainWindow extends JFrame {
     private NextActionListener buttonNextActionListener;
     private OpenFileActionListener buttonOpenFileActionListener;
     private StopActionListener buttonStopActionListener;
+    private SaveInFileActionListener buttonSaveInFileActionListener;
     
     private PaintAreaMode stashedMode;
 
@@ -56,7 +57,7 @@ public class MainWindow extends JFrame {
         textArea = new JTextArea(10, 1);
         textArea.setOpaque(true);
         textArea.setBackground(Color.WHITE);
-        textArea.setEditable(false);
+        textArea.setEditable(true);
         scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createLineBorder(Color.black));
 
@@ -99,6 +100,9 @@ public class MainWindow extends JFrame {
 
         buttonStopActionListener = new StopActionListener();
         buttonStop.addActionListener(buttonStopActionListener);
+        
+        buttonSaveInFileActionListener = new SaveInFileActionListener();
+        buttonSaveInFile.addActionListener(buttonSaveInFileActionListener);
 
         Container container = getContentPane();
         container.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -196,36 +200,72 @@ public class MainWindow extends JFrame {
     }
     
     public class OpenFileActionListener implements ActionListener {
+    	private final String SAVEFILE_SIGNATURE = "BFSV\u0002";
+    	private final String ERROR_PREFIX = "ERROR: ";
+    	private final String INFO_PREFIX = "INFO: ";
+    	
     	public void actionPerformed(ActionEvent e) {
     		textArea.setText("");
     		FileReaderWrapper wrapper = new FileReaderWrapper();
     		if(wrapper.open(MainWindow.this) == null) {
-    			textArea.append("INFO: File has not been chosen or has not been found.\n");
+    			textArea.append(INFO_PREFIX + "File has not been chosen.\n");
     			return;
     		}
     		
-    		ArrayList<ArrayList<String>> content = wrapper.read(FileReaderWrapper.Mode.SAVEFILE);
+    		ArrayList<ArrayList<String>> content = wrapper.read();
     		if(content == null) {
-    			textArea.setText("ERROR: Failed to parse file.\n");
+    			textArea.setText(ERROR_PREFIX + "Failed to parse file.\n");
+    			JOptionPane.showMessageDialog(null, "Failed to parse file.",
+        				"Input error", JOptionPane.ERROR_MESSAGE);
     			return;
     		}
+    		
     		graph.reset();
     		
+    		boolean nonFatalErrorFlag = false;
+    		if(content.size() > 0 && content.get(0).size() > 0 && content.get(0).get(0).equals(SAVEFILE_SIGNATURE)) {
+    			content.remove(0);
+    			try {
+    				nonFatalErrorFlag = createGraphFromSaveData(content);
+    			}
+    			catch(Exception ex) {
+    				area.clear();
+    				JOptionPane.showMessageDialog(null,"File structure does not correspond with a save file structure.",
+            				"Fatal file interpretation error", JOptionPane.ERROR_MESSAGE);
+    			}
+    		}
+    		else {
+    			nonFatalErrorFlag = createGraphFromInput(content);
+    		}
+    		
+    		area.clear();
+    		area.drawGraph();
+    		
+    		if(nonFatalErrorFlag) {
+				JOptionPane.showMessageDialog(null,"Errors occurred while creating a graph. Check log for information.",
+						"File interpretation error", JOptionPane.WARNING_MESSAGE);
+			}
+    	}
+    	
+    	private boolean createGraphFromInput(ArrayList<ArrayList<String>> content) {
+    		boolean errorFlag = false;
     		for(ArrayList<String> line: content) {
     			if(line.size() != 2) {
-    				textArea.append("WARNING: Input line doesn't describe an edge: "+line.toString()+". Ignored.\n");
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX+"Input line doesn't describe an edge: "+line.toString()+". Ignored.\n");
     				continue;
     			}
     			if(line.get(0).length() == 1) graph.addNode(line.get(0));
     			if(line.get(1).length() == 1) graph.addNode(line.get(1));
     			if(!(graph.addEdge(line.get(0), line.get(1)))) {
-    				textArea.append("ERROR: Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Edge " + line.get(0) + " - " + line.get(1) + " is not allowed.\n");
     				textArea.append("\t" + "Either invalid node name has been encountered, or this edge already " + 
     				"exists, or this edge is a loop.\n");
     			}
     		}
     		
-    		int radius = Math.min(area.getBounds().height, area.getBounds().width) / 2 - 35;
+    		int radius = Math.min(area.getBounds().height, area.getBounds().width) / 2 - NodeImage.SIZE/2;
     		int xCenter = area.getBounds().width/2;
     		int yCenter = area.getBounds().height/2;
     		
@@ -234,9 +274,110 @@ public class MainWindow extends JFrame {
     			double angle = 2*i*Math.PI/lst.size();
     			lst.get(i).setPoint(new algorithm.Point((int)(xCenter + radius*Math.cos(angle)), (int)(yCenter + radius*Math.sin(angle))));
     		}
+    		return errorFlag;
+    	}
+    	
+    	private boolean createGraphFromSaveData(ArrayList<ArrayList<String>> content) {
+    		boolean errorFlag = false;
+    		int expectedNodesCount;
+    		textArea.append(INFO_PREFIX + "Save file signature recognized.\n");
+    		try {
+    			expectedNodesCount = Integer.parseInt(content.get(0).get(0));
+    			content.remove(0);
+    		}
+    		catch(Exception ex) {
+    			throw ex;
+    		}
     		
-    		area.clear();
-    		area.drawGraph();
+    		int nodeCounter = 0;
+    		ArrayList<String> names = new ArrayList<String>();
+    		ArrayList<Integer> xValues = new ArrayList<Integer>();
+    		ArrayList<Integer> yValues = new ArrayList<Integer>();
+    		
+    		while(content.size() > 0 && content.get(0).size() >= 3) {
+    			ArrayList<String> line = content.get(0);
+    			try {
+    				names.add(line.get(0));
+    				xValues.add(Integer.valueOf(Integer.parseInt(line.get(1))));
+    				yValues.add(Integer.valueOf(Integer.parseInt(line.get(2))));
+    			}
+    			catch(Exception ex) {
+    				textArea.append(ERROR_PREFIX + "Node " + line.get(0) + " coordinates don't seem to be valid.\n");
+    				throw ex;
+    			}
+    			if(line.size() > 3) {
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Extra characters in a line describing node.\n");
+    			}
+    			if(xValues.get(xValues.size() - 1) > area.getWidth() || 
+    					yValues.get(yValues.size() - 1) > area.getHeight()) {
+    				textArea.append(INFO_PREFIX + "Coordinates larger than the canvas size may cause problems.\n");
+    			}
+    			++nodeCounter;
+    			content.remove(0);
+    		}
+    		if(nodeCounter != expectedNodesCount) {
+    			errorFlag = true;
+    			textArea.append(ERROR_PREFIX + 
+    					"Declared number of nodes does not match number of nodes present in a file.\n");
+    		}
+    		
+    		for(int i = 0; i < names.size(); ++i) {
+    			if(names.get(i).length() == 1) {
+    				if(graph.addNode(names.get(i))) {
+    					if(xValues.get(i) < NodeImage.SIZE/2) {
+    						xValues.set(i, NodeImage.SIZE/2);
+    						errorFlag = true;
+    						textArea.append(ERROR_PREFIX+"Node is too close to the upper-left border or " +
+    						"has negative coordinates. Changed node placement to the very edge of the working area.\n");
+    					}
+    					if(yValues.get(i) < NodeImage.SIZE/2) {
+    						yValues.set(i, NodeImage.SIZE/2);
+    						errorFlag = true;
+    						textArea.append(ERROR_PREFIX+"Node is too close to the upper-left border or " +
+    						"has negative coordinates. Changed node placement to the very edge of the working area.\n");
+    					}
+    					graph.getNodeByName(names.get(i)).setPoint(xValues.get(i), yValues.get(i));
+    				}
+    				else {
+    					errorFlag = true;
+    					textArea.append(ERROR_PREFIX + "Node " + names.get(i) + " already exists.\n");
+    				}
+    			}
+    			else {
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Illegal node name: '" + names.get(i) + "'\n");
+    			}
+    		}
+    		
+    		for(ArrayList<String> line: content) {
+    			if(line.size() == 2) {
+    				if(!graph.addEdge(line.get(0), line.get(1))) {
+    					errorFlag = true;
+    					textArea.append(ERROR_PREFIX + "Edge " + line.get(0) + " - " + line.get(1) + 
+    					" could not be added. Either nodes don't exist or edge already exists or edge is a loop.\n");
+    				}
+    			}
+    			else {
+    				errorFlag = true;
+    				textArea.append(ERROR_PREFIX + "Line does not describe an edge: " + line + " Ignored.\n");
+    			}
+    		}
+    		
+    		return errorFlag;
+    	}
+    }
+    
+    public class SaveInFileActionListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		FileWriterWrapper wrapper = new FileWriterWrapper();
+    		if(!wrapper.open(MainWindow.this)) {
+    			textArea.append("INFO: File was not chosen.\n");
+    			return;
+    		}
+    		if(!wrapper.write(graph)) {
+    			textArea.append("ERROR: Failed to save graph in file.\n");
+    		}
     	}
     }
     
@@ -254,6 +395,7 @@ public class MainWindow extends JFrame {
     		buttonStart.setEnabled(false);
     		buttonStop.setEnabled(true);
     		buttonNext.setEnabled(true);
+    		textArea.setEditable(false);
     		
     		ArrayList<Object> visObjects = graph.getVisualizationObjects();
     		textArea.append("\nStarting algorithm... Click 'Next' to explore steps.\n====\n");
@@ -280,6 +422,7 @@ public class MainWindow extends JFrame {
     		buttonStart.setEnabled(true);
     		buttonStop.setEnabled(false);
     		buttonNext.setEnabled(false);
+    		textArea.setEditable(true);
     		area.currentMode = stashedMode;
     		area.clear();
     		area.drawGraph();
@@ -301,7 +444,9 @@ public class MainWindow extends JFrame {
     	
     	private final Color usedNodeColor = Color.LIGHT_GRAY;
     	private final Color activeNodeColor = Color.YELLOW;
+    	private final Color backwardEdgeColor = Color.BLUE;
     	private final Color bridgeColor = Color.RED;
+    	
     	
     	public VisualStatus(ArrayList<Object> objectsInSearch, ArrayList<Node> nodes, ArrayList<Edge> bridges) {
     		this.objectsInSearch = objectsInSearch;
@@ -337,7 +482,9 @@ public class MainWindow extends JFrame {
     									"\n\tH = max(N; {H(\u03bc) | " + currentNode + " -> \u03bc}; {N(\u03bc) | " + 
     									currentNode +
     									" <- \u03bc}): " + currentNode.getAlgorithmValues()[3] + "\n");
-    					area.drawNode(currentNode, usedNodeColor);
+    					area.drawNode(currentNode, usedNodeColor, new String[] {String.valueOf(currentNode.getAlgorithmValues()[0]),
+								String.valueOf(currentNode.getAlgorithmValues()[1]), String.valueOf(currentNode.getAlgorithmValues()[2]),
+								String.valueOf(currentNode.getAlgorithmValues()[3])});
     				}
     				else {
     					nodeStack.addFirst(currentNode);
@@ -361,11 +508,11 @@ public class MainWindow extends JFrame {
     					if(currentEdge.isBackward) {
     						textArea.append("Edge " + currentEdge + " is not used because " + 
     						currentEdge.getFirstNode() + " was visited earlier. This edge becomes backward-oriented.\n");
-    						// orienting this edge backward
+							area.drawArrow(currentEdge, backwardEdgeColor);
     					}
     					else {
     						textArea.append("Choosing edge " + currentEdge + " to move on.\n");
-    						// orienting edge
+    						area.drawArrow(currentEdge);
     					}
     				}
     			}
@@ -375,9 +522,10 @@ public class MainWindow extends JFrame {
     		case DECISION:
     			area.clear();
     			textArea.append("Edge \u03bc -> \u03bd is a bridge if and only if H(\u03bd) \u2264 N(\u03bd) and " +
-    							"L(\u03bd) > N(\u03bd) - D(\u03bd)\nBridges are highlighted.\n");
+    							"L(\u03bd) > N(\u03bd) - D(\u03bd)\nBridges are highlighted:\n");
     			for(Edge bridge: this.bridges) {
     				area.drawEdge(bridge, bridgeColor);
+    				textArea.append(bridge + "\n");
     			}
     			area.drawGraph();
     			stage = Stage.FINISH;

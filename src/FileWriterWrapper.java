@@ -32,8 +32,17 @@ public class FileWriterWrapper {
 		
 		filename = chooser.getSelectedFile().getAbsolutePath();
 		if(filename.length() == 0) return false;
-		if(!filename.endsWith(".bfsv")) {
-			filename = filename.split("\\.")[0] + ".bfsv";
+		if(chooser.getSelectedFile().getName().matches("\\..*")) {
+			JOptionPane.showMessageDialog(null, "File name cannot begin with '.'", "Saving process aborted",
+					JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		if(!(filename.endsWith(".bfsv")) || (chooser.getSelectedFile().getName().matches(".+\\..*\\.bfsv"))) {
+			String dirName = chooser.getSelectedFile().getParent();
+			String lastName = chooser.getSelectedFile().getName();
+			filename = dirName + File.separator + lastName.split("\\.")[0] + ".bfsv";
+			JOptionPane.showMessageDialog(null, "Forcefully changed file extension to '.bfsv'", "Saving issue",
+					JOptionPane.INFORMATION_MESSAGE);
 		}
 		
 		try {

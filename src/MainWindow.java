@@ -372,7 +372,7 @@ public class MainWindow extends JFrame {
     	public void actionPerformed(ActionEvent e) {
     		FileWriterWrapper wrapper = new FileWriterWrapper();
     		if(!wrapper.open(MainWindow.this)) {
-    			textArea.append("INFO: File was not chosen or could not be opened.\n");
+    			textArea.append("INFO: File was not chosen.\n");
     			return;
     		}
     		if(!wrapper.write(graph)) {
